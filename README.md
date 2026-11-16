@@ -48,6 +48,8 @@ O painel ✨ no canto inferior direito funciona com **qualquer chat de IA** — 
 4. Envia o prompt no teu chat de IA preferido (ChatGPT, Gemini, Copilot, Claude…).
 5. Para a adaptação do CV: cola a resposta da IA (um JSON) no passo 4 do painel e clica em **✅ Aplicar resposta ao CV** — o cargo, o resumo e as competências são atualizados no documento, prontos a editar e exportar.
 
+Ao aplicar, o painel fecha e uma confirmação aparece acima do CV para facilitar a revisão. A resposta precisa de conter `cargo`, `resumo` e exatamente 6 `competencias` (cada uma com `titulo` e `descricao`); blocos de código à volta do JSON são aceites. Respostas inválidas mostram uma mensagem no painel sem alterar o documento. Nome, contactos, experiência, formação e fotografia não são alterados por este passo.
+
 > 💡 O conteúdo do ficheiro usa **dados fictícios de exemplo** — edita o documento diretamente com os teus dados (as edições ficam guardadas no teu navegador).
 
 ## 🛠️ Tecnologias

@@ -115,6 +115,8 @@
         </div>
     </div>
 
+    <p id="editorStatus" class="no-print w-full max-w-[210mm] mb-3 px-4 text-sm" role="status" aria-live="polite" tabindex="-1" hidden></p>
+
     <!-- Documento CV (folha A4) -->
     <div id="cv-sheet" class="cv-page shadow-xl border border-gray-100" contenteditable="true" spellcheck="false">
 
@@ -301,8 +303,8 @@
             <textarea id="respostaInput" class="w-full text-xs p-3 border border-gray-300 rounded-lg mb-2 h-20 focus:outline-none focus:border-[#004494]" placeholder='Cola aqui a resposta da IA (o JSON com cargo, resumo e competências)'></textarea>
             <button onclick="aplicarResposta()" class="w-full bg-green-600 text-white text-[11px] py-2.5 rounded-lg font-bold hover:bg-green-700 transition">✅ Aplicar resposta ao CV</button>
 
-            <div id="aiResultBox" class="hidden flex-col mt-2 border-t pt-3">
-                <div id="aiOutputText" class="w-full text-[11px] p-3 bg-gray-50 rounded-lg h-40 overflow-y-auto whitespace-pre-wrap text-gray-700"></div>
+            <div id="aiResultBox" class="hidden flex-col mt-2 border-t pt-3" role="status" aria-live="polite">
+                <div id="aiOutputText" class="w-full text-[11px] p-3 bg-gray-50 rounded-lg whitespace-pre-wrap text-gray-700"></div>
             </div>
         </div>
         <button onclick="toggleAiPanel()" class="bg-gradient-to-r from-[#004494] to-indigo-600 text-white p-4 rounded-full shadow-2xl hover:scale-105 transition-transform flex items-center justify-center">
@@ -370,7 +372,12 @@
                     localStorage.setItem(STORAGE_FOTO, foto.src);
                 }
                 localStorage.setItem(STORAGE_HTML, document.getElementById('cv-sheet').innerHTML);
-            } catch (e) { /* armazenamento cheio ou indisponível */ }
+                return true;
+            } catch (e) {
+                console.error('Não foi possível guardar o CV no navegador:', e);
+                mostrarResultado('⚠️ As alterações estão no documento, mas não foi possível guardá-las neste navegador. Exporta o PDF antes de fechar ou recarregar a página.');
+                return false;
+            }
         }
 
         function reporOriginal() {
@@ -421,8 +428,10 @@
         }
 
         function mostrarResultado(texto) {
-            document.getElementById('aiOutputText').innerText = texto;
-            document.getElementById('aiResultBox').classList.remove('hidden');
+            document.getElementById('aiOutputText').textContent = texto;
+            const box = document.getElementById('aiResultBox');
+            box.classList.remove('hidden');
+            box.scrollIntoView({ block: 'nearest' });
         }
 
         /* ---------- Geração de prompts para o chat de IA do utilizador ---------- */
@@ -494,39 +503,69 @@ ${vaga}`;
             setTimeout(() => { btn.innerText = original; }, 1500);
         }
 
+        function lerResposta(bruto) {
+            if (!bruto.trim()) throw new Error('Cola primeiro a resposta da IA no passo 4.');
+
+            const inicio = bruto.indexOf('{');
+            const fim = bruto.lastIndexOf('}');
+            let dados;
+            try {
+                dados = JSON.parse(bruto.slice(inicio, fim + 1));
+            } catch {
+                throw new Error('A resposta deve conter o JSON completo devolvido pelo prompt «Adaptar CV», com cargo, resumo e competencias. Texto livre, cartas e respostas de entrevista não podem ser aplicados ao CV.');
+            }
+
+            const textoValido = valor => typeof valor === 'string' && valor.trim().length > 0;
+            if (!dados || !textoValido(dados.cargo) || !textoValido(dados.resumo) ||
+                !Array.isArray(dados.competencias) || dados.competencias.length !== 6 ||
+                !dados.competencias.every(c => c && textoValido(c.titulo) && textoValido(c.descricao))) {
+                throw new Error('O JSON deve incluir cargo e resumo como textos não vazios e exatamente 6 competencias, cada uma com titulo e descricao não vazios. Nenhuma alteração foi aplicada.');
+            }
+            return dados;
+        }
+
         /* ------- Aplica ao documento a resposta JSON colada pelo utilizador ------- */
         function aplicarResposta() {
-            const bruto = document.getElementById('respostaInput').value.trim();
-            if (!bruto) { alert('Cola primeiro a resposta da IA no passo 4.'); return; }
-
+            let dados;
             try {
-                // tolera texto/blocos de código à volta do JSON
-                const inicio = bruto.indexOf('{');
-                const fim = bruto.lastIndexOf('}');
-                if (inicio === -1 || fim === -1) throw new Error('JSON não encontrado');
-                const dados = JSON.parse(bruto.slice(inicio, fim + 1));
-
-                if (dados.cargo) document.getElementById('cargoAlvo').innerText = dados.cargo;
-                if (dados.resumo) document.getElementById('resumoTexto').innerText = dados.resumo;
-                if (Array.isArray(dados.competencias) && dados.competencias.length) {
-                    const grid = document.getElementById('competenciasGrid');
-                    grid.innerHTML = '';
-                    dados.competencias.slice(0, 6).forEach(c => {
-                        const p = document.createElement('p');
-                        const b = document.createElement('span');
-                        b.className = 'font-bold text-gray-800';
-                        b.textContent = `• ${c.titulo}: `;
-                        p.appendChild(b);
-                        p.appendChild(document.createTextNode(c.descricao || ''));
-                        grid.appendChild(p);
-                    });
-                }
-                guardarEstado();
-                mostrarResultado('✅ CV adaptado à vaga! O cargo, o resumo e as competências foram atualizados no documento. Revê o texto (é editável) antes de exportar o PDF.');
+                dados = lerResposta(document.getElementById('respostaInput').value);
             } catch (e) {
-                console.error(e);
-                mostrarResultado('⚠️ Não consegui ler a resposta. Confirma que colaste o JSON completo devolvido pela IA (deve começar por { e terminar em }).');
+                mostrarResultado('⚠️ ' + e.message);
+                return;
             }
+
+            const cargo = document.getElementById('cargoAlvo');
+            const resumo = document.getElementById('resumoTexto');
+            const grid = document.getElementById('competenciasGrid');
+            if (!cargo || !resumo || !grid) {
+                mostrarResultado('⚠️ A estrutura do CV foi alterada e faltam campos necessários. Guarda uma cópia do teu texto antes de usar «Repor original», pois esse botão apaga as edições. Nenhuma alteração foi aplicada.');
+                return;
+            }
+
+            const competencias = dados.competencias.map(c => {
+                const p = document.createElement('p');
+                const b = document.createElement('span');
+                b.className = 'font-bold text-gray-800';
+                b.textContent = `• ${c.titulo}: `;
+                p.appendChild(b);
+                p.appendChild(document.createTextNode(c.descricao));
+                return p;
+            });
+            cargo.textContent = dados.cargo;
+            resumo.textContent = dados.resumo;
+            grid.replaceChildren(...competencias);
+
+            const guardado = guardarEstado();
+            const status = document.getElementById('editorStatus');
+            status.textContent = guardado
+                ? '✅ CV atualizado e guardado neste navegador: cargo, resumo e 6 competências. Revê o resultado abaixo antes de exportar. Nome, contactos, experiência, formação e fotografia foram mantidos.'
+                : '⚠️ CV atualizado, mas não foi possível guardá-lo neste navegador. Exporta o PDF antes de fechar ou recarregar a página.';
+            status.hidden = false;
+            const panel = document.getElementById('aiPanel');
+            panel.classList.remove('active');
+            panel.classList.add('hidden');
+            status.focus({ preventScroll: true });
+            status.scrollIntoView({ block: 'start' });
         }
     </script>
 </body>
