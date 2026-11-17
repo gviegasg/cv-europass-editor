@@ -1,59 +1,42 @@
-# CV Editor — Modelo EUROPASS
+# CV Editor
 
-Editor de currículo no modelo **EUROPASS** num único ficheiro HTML, pensado para impressão perfeita em **A4** com margens homogéneas, centralizadas e mínimas.
+Editor gratuito de currículo no navegador, com fotografia opcional, impressão em A4 e prompts para o chat de IA escolhido pelo utilizador.
 
-## ✨ Funcionalidades
+## Utilização
 
-- 📄 **Modelo EUROPASS** fiel (barra lateral azul, secções clássicas)
-- 🖼️ **Fotografia**: clica na moldura para inserir/alterar a foto
-- ✏️ **Edição direta**: todo o texto da folha é editável (clica e escreve); as edições são guardadas automaticamente no navegador
-- 🖨️ **Impressão A4 perfeita**: ecrã, `Imprimir` e `Descarregar PDF` usam exatamente a mesma margem, igual nos 4 lados
-- 🎯 **Adaptar CV à vaga (sem chave API!)**: cola o teu CV atual (ou carrega um `.txt`) e o anúncio da vaga — o projeto gera um **prompt pronto a copiar** para o teu chat de IA preferido (ChatGPT, Gemini, Copilot…); depois colas a resposta e o editor aplica o cargo, o resumo e as 6 competências diretamente no documento
-- ❓ **Prompts de perguntas de entrevista** e de **carta de apresentação** gerados com um clique
-- 🔄 **Repor original**: descarta as edições guardadas e volta ao conteúdo do ficheiro
+Abre `index.html` num navegador moderno. A página inicial explica o processo e o editor está logo abaixo. Os textos em cinzento nos campos são orientações: não fazem parte do CV impresso.
 
-## 🚀 Como usar
+1. Preenche os campos do currículo. O editor começa com seis competências, três experiências e três formações; os controlos permitem adicionar ou remover experiências e formações (até 20 por secção).
+2. Opcionalmente, escolhe uma fotografia JPEG ou PNG de **pelo menos 300 × 400 pixels**, com **até 5 MB**. A imagem é recortada verticalmente. Podes desmarcar **Incluir foto no CV** antes de imprimir.
+3. Ajusta a margem, a fonte e o tamanho diretamente nos controlos do editor. Se o conteúdo exceder uma página A4, surge um aviso; revê também a pré-visualização do navegador.
+4. Usa **Exportar backup** para guardar um ficheiro JSON com o CV, a fotografia e as configurações. **Importar backup** recupera esse ficheiro e substitui o CV da sessão após confirmação.
+5. Para gerar PDF, usa **Imprimir** e escolhe A4, margens nenhumas, escala 100% e sem cabeçalhos ou rodapés. Também podes usar **Descarregar PDF**.
 
-Abre o `index.html` em qualquer navegador moderno (Chrome recomendado). Não precisa de servidor nem instalação. A página inicial explica os passos; seleciona **Começar a editar** para ir diretamente ao editor abaixo. A apresentação não aparece na impressão.
+Escolhe entre o modelo atual e um modelo inspirado no Europass (não oficial), sem perder os dados. O idioma do CV pode ser português de Portugal, português do Brasil, espanhol ou inglês: altera os títulos e as orientações, mas **não traduz o texto escrito**. Escreve ou revê os teus dados no idioma escolhido. O idioma e o modelo são incluídos nos novos backups; backups anteriores continuam a funcionar e usam o modelo atual em português de Portugal.
 
-## ⚙️ Configuração (margens, fonte e tamanho)
+## Privacidade e duração da sessão
 
-No topo do `index.html`, dentro de `<style>`, está o bloco de configuração — edita estes valores:
+O editor não grava o CV automaticamente nem o envia para um servidor. O conteúdo é mantido na memória da página e é descartado quando ela é atualizada ou fechada, ou após **duas horas de inatividade**. Ao regressar a uma página suspensa, o prazo de inatividade é verificado. Exporta um backup antes de sair.
 
-```css
-:root {
-    --margem: 10mm;                              /* margem A4, igual nos 4 lados */
-    --fonte: Arial, Helvetica, sans-serif;       /* família da fonte */
-    --fonte-base: 10px;                          /* tamanho base — tudo escala a partir dele */
-    --entrelinha: 1.35;                          /* altura de linha */
-}
-```
+O backup e o PDF são ficheiros no dispositivo do utilizador: não são apagados pelo editor e podem conter dados pessoais. Ao copiar o prompt ou enviá-lo a um serviço de IA, os dados incluídos ficam na área de transferência ou são partilhados com esse serviço. As bibliotecas visuais e de PDF são carregadas de CDNs, que podem receber dados de ligação, como o endereço IP.
 
-- **Margem mínima**: podes descer até `6mm` sem risco de corte na maioria das impressoras.
-- **Tamanho da fonte**: todos os textos do CV escalam proporcionalmente a partir de `--fonte-base` (o nome é 2×, as datas 0.9×, etc.). Sobe para `10.5px`/`11px` para mais legibilidade, desce para `9.5px` para caber mais conteúdo.
+Uma versão anterior guardava rascunhos no navegador. Se existirem, o editor mostra opções para os recuperar, exportar ou apagar. Esses dados antigos permanecem no navegador até serem apagados pelo utilizador. A recuperação converte até seis competências e 20 experiências ou formações por secção. Se a fotografia antiga não cumprir os requisitos, podes recuperar apenas o texto; se a estrutura não puder ser convertida, exporta os dados antigos antes de os apagar.
 
-## 🖨️ Dicas de impressão
+## Assistente de carreira
 
-1. Usa o botão **Imprimir** (gera PDF vetorial, texto selecionável — melhor qualidade que o html2pdf).
-2. No diálogo de impressão: papel **A4**, margens **Nenhuma/None**, escala **100%**, e desativa **Cabeçalhos e rodapés**.
-3. A margem do documento vem da variável `--margem` do ficheiro — não do navegador.
+O painel ✨ gera prompts sem chave API:
 
-## 🤖 Assistente de carreira (sem chave API)
+1. Preenche o CV no editor ou cola/carrega o texto do CV atual (`.txt` ou `.md`).
+2. Cola ou carrega o anúncio da vaga (`.txt` ou `.md`) e gera um prompt de adaptação, entrevista ou carta.
+3. Copia o prompt para o chat de IA escolhido. Para adaptação, cola a resposta JSON no painel e aplica-a.
+4. Revê os resultados: apenas o cargo, o resumo e as seis competências são substituídos. Nome, contactos, experiência, formação e fotografia mantêm-se.
 
-O painel ✨ no canto inferior direito funciona com **qualquer chat de IA** — não precisas de chave API:
+A resposta de adaptação precisa de `cargo`, `resumo` e exatamente seis `competencias`, cada uma com `titulo` e `descricao`. Um bloco de código à volta do JSON é aceite. O utilizador deve confirmar a veracidade de qualquer conteúdo gerado por IA.
 
-1. **(Opcional)** Cola o texto do teu CV atual ou carrega um `.txt`. Se deixares vazio, é usado o CV do documento.
-2. Cola o **anúncio da vaga**.
-3. Clica em **🎯 Gerar prompt: Adaptar CV à vaga** (ou *Entrevista* / *Carta*) e copia o prompt gerado.
-4. Envia o prompt no teu chat de IA preferido (ChatGPT, Gemini, Copilot, Claude…).
-5. Para a adaptação do CV: cola a resposta da IA (um JSON) no passo 4 do painel e clica em **✅ Aplicar resposta ao CV** — o cargo, o resumo e as competências são atualizados no documento, prontos a editar e exportar.
+## Contribuições voluntárias
 
-Ao aplicar, o painel fecha e uma confirmação aparece acima do CV para facilitar a revisão. A resposta precisa de conter `cargo`, `resumo` e exatamente 6 `competencias` (cada uma com `titulo` e `descricao`); blocos de código à volta do JSON são aceites. Respostas inválidas mostram uma mensagem no painel sem alterar o documento. Nome, contactos, experiência, formação e fotografia não são alterados por este passo.
+Não há limite de downloads nem pagamento obrigatório. Para ativar o convite opcional após **Descarregar PDF**, define `DONATION_URL` em `editor.js` com um link público HTTPS de uma página de doação. Enquanto estiver vazio, o convite permanece oculto. O link abre o serviço escolhido noutro separador; consulta as condições e a política de privacidade desse serviço antes de o configurar.
 
-> 💡 O conteúdo do ficheiro usa **dados fictícios de exemplo** — edita o documento diretamente com os teus dados (as edições ficam guardadas no teu navegador).
+## Testes
 
-## 🛠️ Tecnologias
-
-- HTML + [Tailwind CSS](https://tailwindcss.com) (CDN)
-- [html2pdf.js](https://github.com/eKoopmans/html2pdf.js) para exportação rápida de PDF
-- 100% client-side: sem servidor, sem chaves API, sem envio de dados
+Executa `node --test tests/editor.test.cjs` para os testes automatizados. Os fluxos de foto, backup, impressão e sessão devem também ser verificados no navegador.

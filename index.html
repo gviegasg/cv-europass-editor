@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CV Editor — Modelo EUROPASS</title>
+    <title>CV Editor — Criar currículo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
@@ -24,9 +24,17 @@
             --entrelinha: 1.35;
         }
 
-        .europass-blue { color: #004494; }
-        .europass-bg { background-color: #004494; }
-        .europass-border { border-color: #004494; }
+        .cv-blue { color: #004494; }
+        .cv-border { border-color: #004494; }
+        [data-field]:empty::before {
+            content: attr(data-placeholder);
+            color: #94a3b8;
+            font-weight: normal;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+        .cv-page.exporting { min-height: 0; }
+        .exporting [data-field]:empty::before { content: none; }
 
         /* Folha A4 real (210 × 297 mm) com margem homogénea nos 4 lados */
         .cv-page {
@@ -53,6 +61,23 @@
         .fs-data        { font-size: 0.9em; }   /* Datas                 */
         .fs-mini        { font-size: 0.85em; }  /* Micro-texto           */
 
+        .layout-europass .cv-section {
+            grid-template-columns: 1fr 3fr;
+            border-bottom: 1px solid #d5e0ed;
+            padding: 0.4em 0;
+        }
+        .layout-europass .cv-section > :first-child {
+            grid-column: 1;
+            text-align: left;
+            border-right: 0;
+            padding-right: 1em;
+        }
+        .layout-europass .cv-section > :nth-child(2) { grid-column: 2; }
+        .layout-europass #photoColumn { grid-column: 11 / span 2; grid-row: 1; }
+        .layout-europass #personalData { grid-column: 1 / span 10; grid-row: 1; }
+        .layout-europass #personalData.col-span-12 { grid-column: 1 / span 12; }
+        .layout-europass .fs-nome { letter-spacing: 0; }
+
         @page {
             size: A4 portrait;
             margin: 0; /* a margem real vem de --margem (padding da folha) */
@@ -67,6 +92,7 @@
                 print-color-adjust: exact !important;
             }
             .no-print { display: none !important; }
+            [data-field]:empty::before { content: none !important; }
             .cv-page {
                 box-shadow: none !important;
                 border: none !important;
@@ -97,7 +123,7 @@
         <nav class="flex items-center justify-between gap-4 py-4" aria-label="Navegação principal">
             <a href="#" class="flex items-center gap-2.5 font-bold text-slate-900">
                 <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-[#004494] text-sm font-bold text-white" aria-hidden="true">CV</span>
-                <span>CV Editor <span class="text-[#004494]">Europass</span></span>
+                <span>CV Editor</span>
             </a>
             <div class="flex items-center gap-4 text-sm font-semibold">
                 <a href="#como-funciona" class="hidden text-slate-600 hover:text-[#004494] sm:inline">Como funciona</a>
@@ -116,7 +142,7 @@
                     O teu currículo, <span class="text-[#004494]">pronto para novas oportunidades.</span>
                 </h1>
                 <p class="mt-5 max-w-lg text-base leading-relaxed text-slate-600 sm:text-lg">
-                    Edita um currículo inspirado no modelo Europass, adiciona a tua foto e prepara um PDF em A4. Tudo no teu navegador.
+                    Cria o teu currículo, adiciona uma foto se quiseres e prepara um PDF em A4. Tudo no teu navegador.
                 </p>
                 <div class="mt-7 flex flex-wrap items-center gap-3">
                     <a href="#editor" class="inline-flex items-center gap-2 rounded-lg bg-[#004494] px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-blue-800">
@@ -124,7 +150,7 @@
                     </a>
                     <a href="#como-funciona" class="px-3 py-3 text-sm font-semibold text-slate-700 hover:text-[#004494]">Como funciona <span aria-hidden="true">↓</span></a>
                 </div>
-                <p class="mt-5 text-xs leading-relaxed text-slate-500">Sem conta e sem chave API · Os dados de exemplo podem ser substituídos pelos teus</p>
+                <p class="mt-5 text-xs leading-relaxed text-slate-500">Sem conta e sem chave API · Começa com uma folha em branco</p>
             </div>
             <div class="rounded-3xl border border-blue-100 bg-[#e7eff9] p-5 sm:p-8">
                 <div class="rounded-2xl border border-slate-100 bg-white p-6 shadow-lg shadow-blue-900/10 sm:p-8">
@@ -161,12 +187,12 @@
                 <article class="rounded-xl border border-slate-200 bg-white p-5">
                     <p class="text-xs font-bold uppercase tracking-wider text-[#004494]">01 · Edita</p>
                     <h3 class="mt-3 text-base font-bold text-slate-900">Dá o teu toque</h3>
-                    <p class="mt-2 text-sm leading-relaxed text-slate-600">Clica no texto do CV abaixo para o alterar e na moldura para adicionar uma foto.</p>
+                    <p class="mt-2 text-sm leading-relaxed text-slate-600">Preenche os campos do CV abaixo e adiciona uma foto se quiseres.</p>
                 </article>
                 <article class="rounded-xl border border-slate-200 bg-white p-5">
                     <p class="text-xs font-bold uppercase tracking-wider text-[#004494]">02 · Adapta</p>
                     <h3 class="mt-3 text-base font-bold text-slate-900">Prepara-te para a vaga</h3>
-                    <p class="mt-2 text-sm leading-relaxed text-slate-600">No botão ✨, cola a vaga e, se quiseres, o teu CV. Copia o prompt para o teu chat de IA e cola o JSON recebido para atualizar cargo, resumo e competências.</p>
+                    <p class="mt-2 text-sm leading-relaxed text-slate-600">No botão ✨, cola ou carrega a vaga e, se quiseres, o teu CV em texto. Copia o prompt para o teu chat de IA e cola o JSON recebido para atualizar cargo, resumo e competências.</p>
                 </article>
                 <article class="rounded-xl border border-slate-200 bg-white p-5">
                     <p class="text-xs font-bold uppercase tracking-wider text-[#004494]">03 · Exporta</p>
@@ -174,7 +200,7 @@
                     <p class="mt-2 text-sm leading-relaxed text-slate-600">Confere os dados e usa Imprimir para guardar em PDF ou descarrega o PDF diretamente.</p>
                 </article>
             </div>
-            <p class="mt-5 text-xs leading-relaxed text-slate-600">As edições são guardadas neste navegador. Se enviares o prompt a um serviço de IA, estarás a partilhar com ele o CV e a vaga incluídos no texto.</p>
+            <p class="mt-5 text-xs leading-relaxed text-slate-600">O editor não guarda o CV automaticamente nem o envia para um servidor. Os dados desta sessão são descartados ao atualizar ou fechar a página, ou após 2 horas de inatividade. Exporta um backup para continuar mais tarde. O backup e o PDF ficam no teu dispositivo. Se enviares o prompt a um serviço de IA, estarás a partilhar com ele os dados incluídos. O site carrega bibliotecas de fornecedores externos, que podem receber dados de ligação como o endereço IP.</p>
         </section>
     </main>
 
@@ -183,7 +209,7 @@
         <div>
             <p class="text-xs font-bold uppercase tracking-wider text-[#004494]">O teu espaço</p>
             <h2 class="mt-1 text-xl font-bold text-slate-900">Editor de currículo</h2>
-            <p class="mt-1 text-xs text-gray-600">Clica na folha para editar o texto e na moldura para adicionar uma foto.</p>
+            <p class="mt-1 text-xs text-gray-600">Clica nos campos da folha para os preencher.</p>
         </div>
         <div class="flex items-center gap-2">
             <button id="btnPdf" onclick="gerarPDF()" class="bg-[#004494] text-white px-4 py-1.5 rounded shadow hover:bg-blue-800 transition flex items-center font-semibold text-xs">
@@ -198,158 +224,146 @@
                 </svg>
                 Imprimir
             </button>
-            <button onclick="reporOriginal()" class="bg-white text-gray-700 border border-gray-300 px-3 py-1.5 rounded shadow-sm hover:bg-gray-100 transition font-semibold text-xs" title="Descarta edições guardadas e volta ao conteúdo original do ficheiro">
-                Repor original
+            <button onclick="reporOriginal()" class="bg-white text-gray-700 border border-gray-300 px-3 py-1.5 rounded shadow-sm hover:bg-gray-100 transition font-semibold text-xs" title="Descarta as edições desta sessão">
+                Limpar CV
             </button>
+        </div>
+    </div>
+
+    <div class="no-print w-full max-w-[210mm] mb-3 px-4">
+        <div class="rounded-xl border border-slate-200 bg-white p-4">
+            <div class="flex flex-wrap items-end gap-4">
+                <label class="text-xs font-semibold text-slate-700">Modelo
+                    <select id="layoutControl" class="mt-1 block rounded border border-slate-300 p-2 text-sm">
+                        <option value="atual">Atual</option>
+                        <option value="europass">Inspirado no Europass</option>
+                    </select>
+                </label>
+                <label class="text-xs font-semibold text-slate-700">Idioma do CV
+                    <select id="languageControl" class="mt-1 block rounded border border-slate-300 p-2 text-sm">
+                        <option value="pt-PT">Português (Portugal)</option>
+                        <option value="pt-BR">Português (Brasil)</option>
+                        <option value="es">Español</option>
+                        <option value="en">English</option>
+                    </select>
+                </label>
+                <label class="text-xs font-semibold text-slate-700">Margem (mm)
+                    <input id="marginControl" type="number" min="5" max="25" step="1" value="10" class="mt-1 block w-20 rounded border border-slate-300 p-2 text-sm">
+                </label>
+                <label class="text-xs font-semibold text-slate-700">Fonte
+                    <select id="fontControl" class="mt-1 block rounded border border-slate-300 p-2 text-sm">
+                        <option value="Arial, Helvetica, sans-serif">Arial</option>
+                        <option value="Calibri, Arial, sans-serif">Calibri</option>
+                        <option value="Georgia, serif">Georgia</option>
+                        <option value="'Times New Roman', serif">Times New Roman</option>
+                    </select>
+                </label>
+                <label class="text-xs font-semibold text-slate-700">Tamanho (px)
+                    <input id="fontSizeControl" type="number" min="8" max="18" step="0.5" value="10" class="mt-1 block w-20 rounded border border-slate-300 p-2 text-sm">
+                </label>
+                <button type="button" onclick="exportarBackup()" class="rounded border border-[#004494] px-3 py-2 text-xs font-semibold text-[#004494] hover:bg-blue-50">Exportar backup</button>
+                <label class="cursor-pointer rounded border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Importar backup
+                    <input id="backupUpload" type="file" accept=".json,application/json" class="sr-only" onchange="importarBackup(event)">
+                </label>
+            </div>
+            <div class="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-700">
+                <label class="font-semibold"><input id="includePhoto" type="checkbox" class="mr-1" onchange="alterarFoto()"> Incluir foto no CV</label>
+                <label class="cursor-pointer text-[#004494] underline">Escolher foto
+                    <input id="photoUpload" type="file" accept="image/jpeg,image/png" class="sr-only" onchange="previewImage(event)">
+                </label>
+                <button type="button" onclick="removerFoto()" class="text-[#004494] underline">Remover foto</button>
+                <span>JPEG/PNG · mínimo 300 × 400 px · máximo 5 MB · recorte vertical</span>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-3 text-xs text-[#004494]">
+                <button type="button" onclick="adicionarEntrada('experiencia')" class="font-semibold underline">Adicionar experiência</button>
+                <button type="button" onclick="removerEntrada('experiencia')" class="font-semibold underline">Remover última experiência</button>
+                <button type="button" onclick="adicionarEntrada('educacao')" class="font-semibold underline">Adicionar formação</button>
+                <button type="button" onclick="removerEntrada('educacao')" class="font-semibold underline">Remover última formação</button>
+            </div>
+            <p id="controlStatus" class="mt-3 text-xs text-slate-700" role="status" aria-live="polite"></p>
+            <p class="mt-2 text-xs text-slate-500">O modelo inspirado no Europass não é oficial. O idioma altera os títulos e as orientações; escreve os teus dados no idioma escolhido.</p>
+            <div id="donationNotice" class="hidden mt-3 rounded bg-blue-50 p-3 text-xs text-slate-700" role="status">
+                Se o editor te ajudou, podes apoiar o projeto com uma contribuição voluntária.
+                <a id="donationLink" target="_blank" rel="noopener noreferrer" class="ml-1 font-semibold text-[#004494] underline">Apoiar o projeto</a>
+                <button type="button" onclick="document.getElementById('donationNotice').classList.add('hidden')" class="ml-2 underline">Fechar</button>
+            </div>
+            <p id="pageWarning" class="hidden mt-3 rounded bg-amber-50 p-2 text-xs font-semibold text-amber-800" role="status" aria-live="polite">O conteúdo excede uma página A4. Reduz o texto, a fonte ou a margem antes de imprimir.</p>
+            <p id="sessionWarning" class="hidden mt-3 rounded bg-amber-50 p-2 text-xs font-semibold text-amber-800" role="status" aria-live="polite"></p>
+        </div>
+        <div id="legacyNotice" class="hidden mt-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-900">
+            <p>Há um rascunho guardado pela versão anterior. Ele continua no navegador até ser recuperado ou apagado. Recupera-o e exporta um backup antes de o eliminares.</p>
+            <div class="mt-3 flex flex-wrap gap-3">
+                <button type="button" onclick="recuperarLegado()" class="font-semibold underline">Recuperar rascunho antigo</button>
+                <button type="button" onclick="exportarLegado()" class="font-semibold underline">Exportar dados antigos</button>
+                <button type="button" onclick="apagarLegado()" class="font-semibold underline">Apagar dados antigos</button>
+            </div>
         </div>
     </div>
 
     <p id="editorStatus" class="no-print w-full max-w-[210mm] mb-3 px-4 text-sm" role="status" aria-live="polite" tabindex="-1" hidden></p>
 
     <!-- Documento CV (folha A4) -->
-    <div id="cv-sheet" class="cv-page shadow-xl border border-gray-100" contenteditable="true" spellcheck="false">
-
-        <!-- Cabeçalho / Dados pessoais -->
+    <div id="cv-sheet" class="cv-page shadow-xl border border-gray-100">
         <div class="grid grid-cols-12 gap-3 mb-2">
-            <!-- Fotografia -->
-            <div class="col-span-2 flex justify-start" contenteditable="false">
-                <div class="relative group cursor-pointer border border-gray-300 shadow-sm rounded overflow-hidden bg-slate-100" style="width: 80px; height: 105px;" onclick="document.getElementById('photoUpload').click()" title="Clica para inserir ou alterar a fotografia">
-                    <img id="cvPhoto" class="hidden w-full h-full object-cover" alt="Fotografia">
-                    <div id="photoPlaceholder" class="w-full h-full flex flex-col items-center justify-center text-slate-400 p-1 text-center">
-                        <svg class="w-8 h-8 mb-1" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                        </svg>
-                        <span class="fs-mini leading-tight font-medium text-slate-500">Inserir Foto</span>
-                    </div>
-                    <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity no-print">
-                        <span class="text-white fs-mini font-bold text-center px-1">Alterar</span>
-                    </div>
-                    <input type="file" id="photoUpload" accept="image/*" class="hidden" onchange="previewImage(event)">
-                </div>
+            <div id="photoColumn" class="col-span-2 hidden">
+                <img id="cvPhoto" class="object-cover rounded" style="width: 80px; height: 105px;" alt="Fotografia do candidato">
             </div>
-
-            <!-- Dados pessoais -->
-            <div class="col-span-10 pl-2">
-                <h1 class="fs-nome font-bold europass-blue leading-tight mb-0.5 uppercase tracking-wide">Maria Exemplo da Silva</h1>
-                <h2 id="cargoAlvo" class="fs-cargo font-bold text-gray-800 mb-1">Suporte ao Cliente - Atendimento Remoto</h2>
-
+            <div id="personalData" class="col-span-12">
+                <h1 data-field="nome" data-placeholder="Escreve o teu nome completo" contenteditable="true" aria-label="Nome completo" class="fs-nome font-bold cv-blue leading-tight mb-0.5 tracking-wide"></h1>
+                <h2 id="cargoAlvo" data-field="cargo" data-placeholder="Indica o cargo ou área pretendida" contenteditable="true" aria-label="Cargo pretendido" class="fs-cargo font-bold text-gray-800 mb-1"></h2>
                 <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 fs-contacto text-gray-700">
-                    <ul class="space-y-0.5">
-                        <li class="flex items-start"><span class="font-bold text-gray-500 w-[75px] shrink-0">Morada:</span> <span>Rua das Flores, 123 – Lisboa</span></li>
-                        <li><span class="font-bold text-gray-500 w-[75px] inline-block">Telemóvel:</span> +351 900 000 000 <br> +55 11 90000-0000</li>
-                    </ul>
-                    <ul class="space-y-0.5">
-                        <li><span class="font-bold text-gray-500 w-[65px] inline-block">Email:</span> <a href="mailto:maria.exemplo@email.com" class="europass-blue hover:underline">maria.exemplo@email.com</a></li>
-                    </ul>
+                    <p><strong data-cv-label="address">Morada:</strong> <span data-field="morada" data-placeholder="Cidade e país ou morada" contenteditable="true" aria-label="Morada"></span></p>
+                    <p><strong data-cv-label="email">Email:</strong> <span data-field="email" data-placeholder="Email profissional" contenteditable="true" aria-label="Email"></span></p>
+                    <p><strong data-cv-label="phone">Telemóvel:</strong> <span data-field="telefone" data-placeholder="Número com indicativo" contenteditable="true" aria-label="Telemóvel"></span></p>
                 </div>
             </div>
         </div>
-
         <hr class="mb-2 mt-1 border-t border-gray-200">
-
-        <!-- Resumo Profissional -->
-        <div class="grid grid-cols-12 gap-2 mb-2">
-            <div class="col-span-2 text-right border-r-2 europass-border pr-2">
-                 <h2 class="europass-blue font-bold fs-seccao tracking-wider uppercase mt-0.5">Resumo<br>Profissional</h2>
-            </div>
+        <div class="cv-section grid grid-cols-12 gap-2 mb-2">
+            <div class="col-span-2 text-right border-r-2 cv-border pr-2"><h2 data-cv-label="summary" class="cv-blue font-bold fs-seccao tracking-wider uppercase mt-0.5">Resumo Profissional</h2></div>
+            <div class="col-span-10 pl-2"><p id="resumoTexto" data-field="resumo" data-placeholder="Resume a tua experiência, pontos fortes e objetivo profissional em algumas frases." contenteditable="true" aria-label="Resumo profissional" class="fs-corpo text-gray-700 leading-snug break-words"></p></div>
+        </div>
+        <div class="cv-section grid grid-cols-12 gap-2 mb-2">
+            <div class="col-span-2 text-right border-r-2 cv-border pr-2"><h2 data-cv-label="skills" class="cv-blue font-bold fs-seccao tracking-wider uppercase mt-0.5">Competências</h2></div>
             <div class="col-span-10 pl-2">
-                 <p id="resumoTexto" class="text-left fs-corpo text-gray-700 leading-snug break-words">
-                    Profissional de suporte ao cliente e operações com experiência em ambientes logísticos e industriais.
-                    Especializada no atendimento multicanal, na análise de dados e na reconciliação de inventário para
-                    garantir o cumprimento de prazos e a qualidade do serviço. Domínio de folhas de cálculo e de sistemas
-                    ERP/CRM, com forte capacidade de comunicação entre equipas de operações e clientes. Fluente em Inglês
-                    e Espanhol. (Este é um texto de exemplo — substitui-o pelo teu resumo profissional ou usa o assistente ✨
-                    para o adaptar a uma vaga.)
-                 </p>
+                <div id="competenciasGrid" class="grid grid-cols-2 gap-x-3 gap-y-0.5 fs-corpo text-gray-700 leading-tight">
+                    <p data-field="competencia1" data-placeholder="Indica uma competência relevante" contenteditable="true" aria-label="Competência 1"></p>
+                    <p data-field="competencia2" data-placeholder="Indica outra competência relevante" contenteditable="true" aria-label="Competência 2"></p>
+                    <p data-field="competencia3" data-placeholder="Indica ferramentas ou conhecimentos" contenteditable="true" aria-label="Competência 3"></p>
+                    <p data-field="competencia4" data-placeholder="Indica uma habilidade profissional" contenteditable="true" aria-label="Competência 4"></p>
+                    <p data-field="competencia5" data-placeholder="Indica outra habilidade profissional" contenteditable="true" aria-label="Competência 5"></p>
+                    <p data-field="competencia6" data-placeholder="Indica idiomas ou outras competências" contenteditable="true" aria-label="Competência 6"></p>
+                </div>
             </div>
         </div>
-
-        <!-- Competências Principais -->
-        <div class="grid grid-cols-12 gap-2 mb-2">
-            <div class="col-span-2 text-right border-r-2 europass-border pr-2">
-                 <h2 class="europass-blue font-bold fs-seccao tracking-wider uppercase mt-0.5">Competências</h2>
-            </div>
-            <div class="col-span-10 pl-2">
-                 <div id="competenciasGrid" class="grid grid-cols-2 gap-x-3 gap-y-0.5 text-left fs-corpo text-gray-700 leading-tight">
-                      <p><span class="font-bold text-gray-800">• Literacia Digital & ERPs:</span> Rápida adaptação ao ecossistema SAP (EWM, B1) e gestão de transações logísticas.</p>
-                      <p><span class="font-bold text-gray-800">• Análise de Dados:</span> Análise tática com Folhas de cálculo, Python e SQL para reconciliação de informações.</p>
-                      <p><span class="font-bold text-gray-800">• Convergência Operacional:</span> Registo informático exato, cross-check de inventários e garantia de métricas OTIF.</p>
-                      <p><span class="font-bold text-gray-800">• Customer Service(Logistico):</span> Gestão de demandas de clientes, incidentes de transporte e armazenagem.</p>
-                      <p><span class="font-bold text-gray-800">• Operações Logísticas:</span> Experiência end-to-end (fábrica/armazém) assegurando fluidez e cumprimento de prazos.</p>
-                      <p><span class="font-bold text-gray-800">• Comunicação Multilingue:</span> PT (Nativo), Inglês (Fluente) e Espanhol (Avançado) para gestão internacional.</p>
-                 </div>
-            </div>
-        </div>
-
-        <!-- Experiência Profissional -->
-        <div class="grid grid-cols-12 gap-2 mb-2">
-            <div class="col-span-2 text-right border-r-2 europass-border pr-2">
-                 <h2 class="europass-blue font-bold fs-seccao tracking-wider uppercase mt-0.5">Experiência</h2>
-            </div>
-            <div class="col-span-10 pl-2 space-y-1.5 text-left break-words">
-
-                 <!-- Emprego 1 (exemplo) -->
-                 <div>
-                     <div class="flex justify-between items-baseline mb-0">
-                         <h3 class="font-bold text-gray-800 fs-titulo-item">Assistente de Suporte ao Cliente (Remoto)</h3>
-                         <span class="fs-data font-semibold europass-blue whitespace-nowrap ml-2">Mar/2023 – Atual</span>
-                     </div>
-                     <p class="fs-corpo font-medium text-gray-600 mb-0.5 border-b border-gray-100 pb-0.5">Exemplo Tech, Lda. (Serviços Digitais)</p>
-                     <ul class="list-disc list-outside fs-detalhe space-y-0.5 ml-3.5 text-gray-700 leading-snug">
-                         <li>Atendimento multicanal (email, chat e telefone) com registo rigoroso de ocorrências em CRM e cumprimento consistente dos SLAs definidos.</li>
-                         <li>Colaboração com as equipas de logística e faturação para resolução de incidentes de encomendas, devoluções e reclamações.</li>
-                     </ul>
-                 </div>
-
-                 <!-- Emprego 2 (exemplo) -->
-                 <div>
-                     <div class="flex justify-between items-baseline mb-0">
-                         <h3 class="font-bold text-gray-800 fs-titulo-item">Analista de Operações Logísticas</h3>
-                         <span class="fs-data font-semibold europass-blue whitespace-nowrap ml-2">2019 – 2023</span>
-                     </div>
-                     <p class="fs-corpo font-medium text-gray-600 mb-0.5 border-b border-gray-100 pb-0.5">Logística Modelo, S.A.</p>
-                     <ul class="list-disc list-outside fs-detalhe space-y-0.5 ml-3.5 text-gray-700 leading-snug">
-                         <li>Planeamento de expedições e reconciliação de inventário em ERP, assegurando o espelhamento entre stock físico e sistémico.</li>
-                         <li>Análise de KPIs de entrega (OTIF) em folhas de cálculo e reporte semanal à gestão para melhoria contínua do serviço.</li>
-                     </ul>
-                 </div>
-
-                 <!-- Emprego 3 (exemplo) -->
-                 <div>
-                     <div class="flex justify-between items-baseline mb-0">
-                         <h3 class="font-bold text-gray-800 fs-titulo-item">Operadora de Produção</h3>
-                         <span class="fs-data font-semibold europass-blue whitespace-nowrap ml-2">2016 – 2019</span>
-                     </div>
-                     <p class="fs-corpo font-medium text-gray-600 mb-0.5 border-b border-gray-100 pb-0.5">Fábrica Exemplo & Companhia</p>
-                     <ul class="list-disc list-outside fs-detalhe space-y-0.5 ml-3.5 text-gray-700 leading-snug">
-                         <li>Operação de linha de produção com controlo de qualidade e registo informático dos dados de produção para garantir rastreabilidade.</li>
-                     </ul>
-                 </div>
-
+        <div class="cv-section grid grid-cols-12 gap-2 mb-2">
+            <div class="col-span-2 text-right border-r-2 cv-border pr-2"><h2 data-cv-label="experience" class="cv-blue font-bold fs-seccao tracking-wider uppercase mt-0.5">Experiência</h2></div>
+            <div id="experienceList" class="col-span-10 pl-2 space-y-1.5 text-left break-words">
+                <div>
+                    <div class="flex justify-between items-baseline gap-2"><h3 data-field="experiencia1Cargo" data-placeholder="Cargo desempenhado" contenteditable="true" aria-label="Cargo da experiência 1" class="font-bold text-gray-800 fs-titulo-item"></h3><span data-field="experiencia1Data" data-placeholder="Mês/ano – mês/ano" contenteditable="true" aria-label="Período da experiência 1" class="fs-data font-semibold cv-blue"></span></div>
+                    <p data-field="experiencia1Empresa" data-placeholder="Empresa e local" contenteditable="true" aria-label="Empresa da experiência 1" class="fs-corpo font-medium text-gray-600 border-b border-gray-100"></p>
+                    <p data-field="experiencia1Detalhes" data-placeholder="Descreve responsabilidades e resultados concretos." contenteditable="true" aria-label="Detalhes da experiência 1" class="fs-detalhe text-gray-700 leading-snug whitespace-pre-wrap"></p>
+                </div>
+                <div>
+                    <div class="flex justify-between items-baseline gap-2"><h3 data-field="experiencia2Cargo" data-placeholder="Outro cargo desempenhado" contenteditable="true" aria-label="Cargo da experiência 2" class="font-bold text-gray-800 fs-titulo-item"></h3><span data-field="experiencia2Data" data-placeholder="Mês/ano – mês/ano" contenteditable="true" aria-label="Período da experiência 2" class="fs-data font-semibold cv-blue"></span></div>
+                    <p data-field="experiencia2Empresa" data-placeholder="Empresa e local" contenteditable="true" aria-label="Empresa da experiência 2" class="fs-corpo font-medium text-gray-600 border-b border-gray-100"></p>
+                    <p data-field="experiencia2Detalhes" data-placeholder="Descreve responsabilidades e resultados concretos." contenteditable="true" aria-label="Detalhes da experiência 2" class="fs-detalhe text-gray-700 leading-snug whitespace-pre-wrap"></p>
+                </div>
+                <div>
+                    <div class="flex justify-between items-baseline gap-2"><h3 data-field="experiencia3Cargo" data-placeholder="Outro cargo desempenhado" contenteditable="true" aria-label="Cargo da experiência 3" class="font-bold text-gray-800 fs-titulo-item"></h3><span data-field="experiencia3Data" data-placeholder="Mês/ano – mês/ano" contenteditable="true" aria-label="Período da experiência 3" class="fs-data font-semibold cv-blue"></span></div>
+                    <p data-field="experiencia3Empresa" data-placeholder="Empresa e local" contenteditable="true" aria-label="Empresa da experiência 3" class="fs-corpo font-medium text-gray-600 border-b border-gray-100"></p>
+                    <p data-field="experiencia3Detalhes" data-placeholder="Descreve responsabilidades e resultados concretos." contenteditable="true" aria-label="Detalhes da experiência 3" class="fs-detalhe text-gray-700 leading-snug whitespace-pre-wrap"></p>
+                </div>
             </div>
         </div>
-
-        <!-- Educação e Formação -->
-        <div class="grid grid-cols-12 gap-2 mb-0">
-            <div class="col-span-2 text-right border-r-2 europass-border pr-2">
-                 <h2 class="europass-blue font-bold fs-seccao tracking-wider uppercase mt-0.5">Educação e<br>Estudos</h2>
-            </div>
-            <div class="col-span-10 pl-2 space-y-0.5 fs-corpo text-gray-700">
-                 <div class="flex justify-between items-baseline border-b border-gray-100 pb-0.5">
-                     <p><span class="font-bold">Ensino Secundário Completo</span> (12º Ano)</p>
-                     <span class="fs-data font-semibold europass-blue">Concluído</span>
-                 </div>
-                 <div class="flex justify-between items-baseline border-b border-gray-100 pb-0.5">
-                     <p><span class="font-bold">Curso Profissional de Logística</span> (Instituto Exemplo)</p>
-                     <span class="fs-data font-semibold text-gray-500">2018</span>
-                 </div>
-                 <div class="flex justify-between items-baseline">
-                     <p><span class="font-bold">Licenciatura em Gestão de Empresas</span> (Universidade Exemplo)</p>
-                     <span class="fs-data font-semibold text-gray-500">Em curso</span>
-                 </div>
+        <div class="cv-section grid grid-cols-12 gap-2">
+            <div class="col-span-2 text-right border-r-2 cv-border pr-2"><h2 data-cv-label="education" class="cv-blue font-bold fs-seccao tracking-wider uppercase mt-0.5">Educação e Estudos</h2></div>
+            <div id="educationList" class="col-span-10 pl-2 space-y-0.5 fs-corpo text-gray-700">
+                <p data-field="educacao1" data-placeholder="Curso, instituição e data de conclusão ou situação atual" contenteditable="true" aria-label="Educação 1"></p>
+                <p data-field="educacao2" data-placeholder="Outra formação, instituição e data" contenteditable="true" aria-label="Educação 2"></p>
+                <p data-field="educacao3" data-placeholder="Outra formação, instituição e data" contenteditable="true" aria-label="Educação 3"></p>
             </div>
         </div>
-
     </div>
 
     <!-- 🤖 Assistente IA de Carreira (não imprime) -->
@@ -367,14 +381,18 @@
             <p class="text-[10px] text-gray-500 mb-3 leading-snug">Sem chave API: gera um prompt, envia-o no teu chat de IA preferido (ChatGPT, Gemini, Copilot…) e, no caso da adaptação do CV, cola aqui a resposta para aplicar ao documento.</p>
 
             <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">1 · O teu CV atual (opcional)</label>
-            <textarea id="cvAtualInput" class="w-full text-xs p-3 border border-gray-300 rounded-lg mb-1 h-20 focus:outline-none focus:border-[#004494]" placeholder="Cola aqui o texto do teu CV atual. Se deixares vazio, uso o CV do documento ao lado."></textarea>
+            <textarea id="cvAtualInput" autocomplete="off" class="w-full text-xs p-3 border border-gray-300 rounded-lg mb-1 h-20 focus:outline-none focus:border-[#004494]" placeholder="Cola aqui o texto do teu CV atual. Se deixares vazio, uso o CV do documento ao lado."></textarea>
             <div class="flex items-center gap-2 mb-3">
-                <input type="file" id="cvFileUpload" accept=".txt,.md" class="hidden" onchange="carregarCvFicheiro(event)">
-                <button onclick="document.getElementById('cvFileUpload').click()" class="text-[10px] text-[#004494] font-semibold hover:underline">📎 Carregar ficheiro .txt</button>
+                <input type="file" id="cvFileUpload" accept=".txt,.md" class="hidden" onchange="carregarTextoFicheiro(event, 'cvAtualInput', 'CV')">
+                <button onclick="document.getElementById('cvFileUpload').click()" class="text-[10px] text-[#004494] font-semibold hover:underline">📎 Carregar CV .txt ou .md</button>
             </div>
 
             <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">2 · Anúncio da vaga</label>
-            <textarea id="jobDescriptionInput" class="w-full text-xs p-3 border border-gray-300 rounded-lg mb-3 h-20 focus:outline-none focus:border-[#004494]" placeholder="Cola aqui o anúncio da vaga a que te candidatas"></textarea>
+            <textarea id="jobDescriptionInput" autocomplete="off" class="w-full text-xs p-3 border border-gray-300 rounded-lg mb-1 h-20 focus:outline-none focus:border-[#004494]" placeholder="Cola aqui o anúncio da vaga a que te candidatas"></textarea>
+            <div class="flex items-center gap-2 mb-3">
+                <input type="file" id="jobFileUpload" accept=".txt,.md" class="hidden" onchange="carregarTextoFicheiro(event, 'jobDescriptionInput', 'anúncio da vaga')">
+                <button onclick="document.getElementById('jobFileUpload').click()" class="text-[10px] text-[#004494] font-semibold hover:underline">📎 Carregar vaga .txt ou .md</button>
+            </div>
 
             <button onclick="gerarPrompt('adaptar')" class="w-full bg-gradient-to-r from-[#004494] to-indigo-600 text-white text-[11px] py-2.5 rounded-lg font-bold hover:opacity-90 transition mb-2">🎯 Gerar prompt: Adaptar CV à vaga</button>
             <div class="grid grid-cols-2 gap-2 mb-3">
@@ -384,12 +402,12 @@
 
             <div id="promptBox" class="hidden">
                 <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">3 · Prompt gerado — copia e envia na tua IA</label>
-                <textarea id="promptOutput" readonly class="w-full text-[10px] p-3 border border-gray-300 rounded-lg mb-1 h-24 bg-gray-50 focus:outline-none"></textarea>
+                <textarea id="promptOutput" readonly autocomplete="off" class="w-full text-[10px] p-3 border border-gray-300 rounded-lg mb-1 h-24 bg-gray-50 focus:outline-none"></textarea>
                 <button id="btnCopiar" onclick="copiarPrompt()" class="w-full bg-gray-700 text-white text-[10px] py-2 rounded-lg font-bold hover:bg-gray-900 transition mb-3">📋 Copiar prompt</button>
             </div>
 
             <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">4 · Cola a resposta da IA (só para "Adaptar CV")</label>
-            <textarea id="respostaInput" class="w-full text-xs p-3 border border-gray-300 rounded-lg mb-2 h-20 focus:outline-none focus:border-[#004494]" placeholder='Cola aqui a resposta da IA (o JSON com cargo, resumo e competências)'></textarea>
+            <textarea id="respostaInput" autocomplete="off" class="w-full text-xs p-3 border border-gray-300 rounded-lg mb-2 h-20 focus:outline-none focus:border-[#004494]" placeholder='Cola aqui a resposta da IA (o JSON com cargo, resumo e competências)'></textarea>
             <button onclick="aplicarResposta()" class="w-full bg-green-600 text-white text-[11px] py-2.5 rounded-lg font-bold hover:bg-green-700 transition">✅ Aplicar resposta ao CV</button>
 
             <div id="aiResultBox" class="hidden flex-col mt-2 border-t pt-3" role="status" aria-live="polite">
@@ -401,261 +419,6 @@
         </button>
     </div>
 
-    <script>
-        /* ============================ Fotografia ============================ */
-        function previewImage(event) {
-            const reader = new FileReader();
-            reader.onload = function() {
-                const img = document.getElementById('cvPhoto');
-                const placeholder = document.getElementById('photoPlaceholder');
-                img.src = reader.result;
-                img.classList.remove('hidden');
-                placeholder.classList.add('hidden');
-                guardarEstado();
-            };
-            if (event.target.files && event.target.files[0]) {
-                reader.readAsDataURL(event.target.files[0]);
-            }
-        }
-
-        /* ===================== Exportação PDF (html2pdf) ==================== */
-        function gerarPDF() {
-            const btn = document.getElementById('btnPdf');
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = 'A gerar...';
-
-            const element = document.getElementById('cv-sheet');
-
-            const opt = {
-                // margem 0: a margem homogénea já vem do padding --margem da folha
-                margin: 0,
-                filename: 'CV_EUROPASS.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    scrollX: 0,
-                    scrollY: 0
-                },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            html2pdf().set(opt).from(element).save().then(() => {
-                btn.innerHTML = originalHTML;
-            }).catch(err => {
-                console.error('Erro na exportação:', err);
-                btn.innerHTML = originalHTML;
-            });
-        }
-
-        /* ================== Persistência local das edições ================== */
-        const STORAGE_HTML = 'cv_editor_html';
-        const STORAGE_FOTO = 'cv_editor_foto';
-        let saveTimer = null;
-
-        function guardarEstado() {
-            try {
-                const foto = document.getElementById('cvPhoto');
-                if (foto && foto.src && !foto.classList.contains('hidden')) {
-                    localStorage.setItem(STORAGE_FOTO, foto.src);
-                }
-                localStorage.setItem(STORAGE_HTML, document.getElementById('cv-sheet').innerHTML);
-                return true;
-            } catch (e) {
-                console.error('Não foi possível guardar o CV no navegador:', e);
-                mostrarResultado('⚠️ As alterações estão no documento, mas não foi possível guardá-las neste navegador. Exporta o PDF antes de fechar ou recarregar a página.');
-                return false;
-            }
-        }
-
-        function reporOriginal() {
-            if (confirm('Repor o conteúdo original do ficheiro? As edições guardadas neste navegador serão apagadas.')) {
-                localStorage.removeItem(STORAGE_HTML);
-                localStorage.removeItem(STORAGE_FOTO);
-                location.reload();
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const guardado = localStorage.getItem(STORAGE_HTML);
-            if (guardado) {
-                document.getElementById('cv-sheet').innerHTML = guardado;
-            }
-            const foto = localStorage.getItem(STORAGE_FOTO);
-            if (foto) {
-                const img = document.getElementById('cvPhoto');
-                img.src = foto;
-                img.classList.remove('hidden');
-                document.getElementById('photoPlaceholder').classList.add('hidden');
-            }
-            document.getElementById('cv-sheet').addEventListener('input', () => {
-                clearTimeout(saveTimer);
-                saveTimer = setTimeout(guardarEstado, 800);
-            });
-        });
-
-        /* ================= Assistente de carreira (sem API) ================= */
-        function toggleAiPanel() {
-            const panel = document.getElementById('aiPanel');
-            const isHidden = panel.classList.contains('hidden');
-            if (isHidden) {
-                panel.classList.remove('hidden');
-                setTimeout(() => panel.classList.add('active'), 10);
-            } else {
-                panel.classList.remove('active');
-                setTimeout(() => panel.classList.add('hidden'), 300);
-            }
-        }
-
-        function carregarCvFicheiro(event) {
-            const file = event.target.files && event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = () => { document.getElementById('cvAtualInput').value = reader.result; };
-            reader.readAsText(file);
-        }
-
-        function mostrarResultado(texto) {
-            document.getElementById('aiOutputText').textContent = texto;
-            const box = document.getElementById('aiResultBox');
-            box.classList.remove('hidden');
-            box.scrollIntoView({ block: 'nearest' });
-        }
-
-        /* ---------- Geração de prompts para o chat de IA do utilizador ---------- */
-        function obterContexto() {
-            const cvColado = document.getElementById('cvAtualInput').value.trim();
-            const cvBase = cvColado || document.getElementById('cv-sheet').innerText.trim();
-            const vaga = document.getElementById('jobDescriptionInput').value.trim();
-            return { cvBase, vaga };
-        }
-
-        function gerarPrompt(tipo) {
-            const { cvBase, vaga } = obterContexto();
-            let prompt = '';
-
-            if (tipo === 'adaptar') {
-                if (!vaga) { alert('Cola primeiro o anúncio da vaga (passo 2).'); return; }
-                prompt = `És um consultor de RH sénior. Adapta o meu CV ao anúncio da vaga abaixo, mantendo total veracidade: não inventes experiências nem competências que não constem do meu CV. Escreve em português europeu (PT-PT), estilo EUROPASS, direto e profissional.
-
-Responde APENAS com um objeto JSON válido, sem comentários, sem texto antes ou depois e sem bloco de código, exatamente neste formato:
-{
-  "cargo": "título profissional alvo (máx. 8 palavras)",
-  "resumo": "resumo profissional (máx. 110 palavras)",
-  "competencias": [
-    { "titulo": "título curto", "descricao": "descrição de uma linha" }
-  ]
-}
-A lista "competencias" deve ter exatamente 6 itens.
-
-=== MEU CV ===
-${cvBase}
-
-=== ANÚNCIO DA VAGA ===
-${vaga}`;
-            } else if (tipo === 'entrevista') {
-                prompt = `És um recrutador experiente. Com base no meu CV${vaga ? ' e no anúncio da vaga' : ''} abaixo, prevê as 5 perguntas de entrevista mais prováveis e, para cada uma, sugere uma resposta forte usando apenas factos do meu CV (método STAR quando aplicável). Responde em português.
-
-=== MEU CV ===
-${cvBase}${vaga ? `
-
-=== ANÚNCIO DA VAGA ===
-${vaga}` : ''}`;
-            } else if (tipo === 'carta') {
-                if (!vaga) { alert('Cola primeiro o anúncio da vaga (passo 2).'); return; }
-                prompt = `És um consultor de RH. Escreve uma carta de apresentação persuasiva e concisa (máx. 250 palavras), em português europeu, dirigida à vaga abaixo e baseada apenas em factos do meu CV.
-
-=== MEU CV ===
-${cvBase}
-
-=== ANÚNCIO DA VAGA ===
-${vaga}`;
-            }
-
-            document.getElementById('promptOutput').value = prompt;
-            document.getElementById('promptBox').classList.remove('hidden');
-            mostrarResultado('📋 Prompt gerado (passo 3). Copia-o, envia-o no teu chat de IA preferido' + (tipo === 'adaptar' ? ' e cola a resposta no passo 4 para aplicar ao CV.' : ' e lê a resposta diretamente lá.'));
-        }
-
-        async function copiarPrompt() {
-            const campo = document.getElementById('promptOutput');
-            const btn = document.getElementById('btnCopiar');
-            try {
-                await navigator.clipboard.writeText(campo.value);
-            } catch (e) {
-                campo.select();
-                document.execCommand('copy');
-            }
-            const original = btn.innerText;
-            btn.innerText = '✅ Copiado!';
-            setTimeout(() => { btn.innerText = original; }, 1500);
-        }
-
-        function lerResposta(bruto) {
-            if (!bruto.trim()) throw new Error('Cola primeiro a resposta da IA no passo 4.');
-
-            const inicio = bruto.indexOf('{');
-            const fim = bruto.lastIndexOf('}');
-            let dados;
-            try {
-                dados = JSON.parse(bruto.slice(inicio, fim + 1));
-            } catch {
-                throw new Error('A resposta deve conter o JSON completo devolvido pelo prompt «Adaptar CV», com cargo, resumo e competencias. Texto livre, cartas e respostas de entrevista não podem ser aplicados ao CV.');
-            }
-
-            const textoValido = valor => typeof valor === 'string' && valor.trim().length > 0;
-            if (!dados || !textoValido(dados.cargo) || !textoValido(dados.resumo) ||
-                !Array.isArray(dados.competencias) || dados.competencias.length !== 6 ||
-                !dados.competencias.every(c => c && textoValido(c.titulo) && textoValido(c.descricao))) {
-                throw new Error('O JSON deve incluir cargo e resumo como textos não vazios e exatamente 6 competencias, cada uma com titulo e descricao não vazios. Nenhuma alteração foi aplicada.');
-            }
-            return dados;
-        }
-
-        /* ------- Aplica ao documento a resposta JSON colada pelo utilizador ------- */
-        function aplicarResposta() {
-            let dados;
-            try {
-                dados = lerResposta(document.getElementById('respostaInput').value);
-            } catch (e) {
-                mostrarResultado('⚠️ ' + e.message);
-                return;
-            }
-
-            const cargo = document.getElementById('cargoAlvo');
-            const resumo = document.getElementById('resumoTexto');
-            const grid = document.getElementById('competenciasGrid');
-            if (!cargo || !resumo || !grid) {
-                mostrarResultado('⚠️ A estrutura do CV foi alterada e faltam campos necessários. Guarda uma cópia do teu texto antes de usar «Repor original», pois esse botão apaga as edições. Nenhuma alteração foi aplicada.');
-                return;
-            }
-
-            const competencias = dados.competencias.map(c => {
-                const p = document.createElement('p');
-                const b = document.createElement('span');
-                b.className = 'font-bold text-gray-800';
-                b.textContent = `• ${c.titulo}: `;
-                p.appendChild(b);
-                p.appendChild(document.createTextNode(c.descricao));
-                return p;
-            });
-            cargo.textContent = dados.cargo;
-            resumo.textContent = dados.resumo;
-            grid.replaceChildren(...competencias);
-
-            const guardado = guardarEstado();
-            const status = document.getElementById('editorStatus');
-            status.textContent = guardado
-                ? '✅ CV atualizado e guardado neste navegador: cargo, resumo e 6 competências. Revê o resultado abaixo antes de exportar. Nome, contactos, experiência, formação e fotografia foram mantidos.'
-                : '⚠️ CV atualizado, mas não foi possível guardá-lo neste navegador. Exporta o PDF antes de fechar ou recarregar a página.';
-            status.hidden = false;
-            const panel = document.getElementById('aiPanel');
-            panel.classList.remove('active');
-            panel.classList.add('hidden');
-            status.focus({ preventScroll: true });
-            status.scrollIntoView({ block: 'start' });
-        }
-    </script>
+    <script src="editor.js"></script>
 </body>
 </html>
