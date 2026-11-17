@@ -103,11 +103,19 @@ Este diário reúne os onze commits da branch `main` desde o primeiro até `10eb
 - Foi elaborado este diário a partir do histórico acessível, dos registros de implantação e das decisões documentadas durante o projeto.
 - O README foi revisto e complementado com o link da versão online, o acesso a este diário e esclarecimentos sobre segurança do backup e as duas formas de gerar PDF.
 
-### Alinhamento das seções da página
+### 17:45 — Alinhamento das seções da página
+
+**Commit:** `db26810`
 
 - O cabeçalho, a apresentação, os controles do editor e o rodapé passaram a compartilhar as mesmas bordas laterais da folha do currículo, com espaço nas laterais em telas pequenas.
 - A folha mantém o formato A4 na impressão e no PDF; os cartões de instruções se adaptam à largura da página.
 - O alinhamento foi medido no navegador em larguras de tela diferentes, e o PDF e a impressão foram verificados com dados de teste. Os 23 testes automatizados passaram.
+
+### Novo endereço e formulário de opinião
+
+- O repositório e o endereço do GitHub Pages foram alterados para `cveditor`, e o link da versão online foi atualizado.
+- O formulário de opinião no rodapé teve a altura e o campo de texto reduzidos, mantendo a largura alinhada às demais seções.
+- Foram verificados o alinhamento e os quatro idiomas em tela pequena; os 23 testes automatizados passaram.
 
 ## Situação e decisões registradas
 
