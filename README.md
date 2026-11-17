@@ -14,7 +14,7 @@ Editor de currículo no modelo **EUROPASS** num único ficheiro HTML, pensado pa
 
 ## 🚀 Como usar
 
-Abre o `index.html` em qualquer navegador moderno (Chrome recomendado). Não precisa de servidor nem instalação.
+Abre o `index.html` em qualquer navegador moderno (Chrome recomendado). Não precisa de servidor nem instalação. A página inicial explica os passos; seleciona **Começar a editar** para ir diretamente ao editor abaixo. A apresentação não aparece na impressão.
 
 ## ⚙️ Configuração (margens, fonte e tamanho)
 
