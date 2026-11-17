@@ -37,7 +37,7 @@ function editor({ width = 300, height = 400 } = {}) {
         'aiOutputText', 'aiResultBox', 'marginControl', 'fontControl', 'fontSizeControl', 'cvPhoto',
         'includePhoto', 'photoColumn', 'personalData', 'controlStatus', 'sessionWarning', 'pageWarning',
         'cvAtualInput', 'jobDescriptionInput', 'promptOutput', 'backupUpload', 'cvFileUpload', 'jobFileUpload', 'photoUpload',
-        'promptBox', 'languageControl', 'donationNotice', 'donationLink'];
+        'promptBox', 'languageControl', 'donationNotice', 'donationOffer', 'donationLink', 'feedbackAfterPdf', 'feedbackFooter'];
     const elements = Object.fromEntries(ids.map(id => [id, element()]));
     const labels = ['address', 'email', 'phone', 'summary', 'skills', 'experience', 'education']
         .map(key => Object.assign(element(), { dataset: { cvLabel: key } }));
@@ -55,12 +55,16 @@ function editor({ width = 300, height = 400 } = {}) {
     elements.fontSizeControl.value = '10';
     elements.languageControl.value = 'pt-PT';
     const storage = new Map();
+    const clickedLinks = [];
     const context = vm.createContext({
         document: {
             addEventListener() {},
             getElementById: id => elements[id] || null,
             querySelectorAll: selector => selector === '#cv-sheet [data-field]' ? fields : [],
             querySelector: selector => fields.find(field => selector === `[data-field="${field.dataset.field}"]`) || null,
+            createElement() {
+                return { href: '', click() { clickedLinks.push(this.href); } };
+            },
             documentElement: { style: { setProperty() {} } }
         },
         localStorage: {
@@ -82,7 +86,7 @@ function editor({ width = 300, height = 400 } = {}) {
     vm.runInContext(script, context);
     context.verificarPagina = () => false;
     context.ajustarEntradas = () => {};
-    return { context, elements, fields, labels, storage, setTime(value) { now = value; } };
+    return { context, elements, fields, labels, storage, clickedLinks, setTime(value) { now = value; } };
 }
 
 function resposta() {
@@ -216,16 +220,37 @@ test('o prompt pede a resposta no idioma selecionado', () => {
     assert.match(elements.promptOutput.value, /Escreve em inglês/);
 });
 
-test('convite de apoio aparece apenas com link HTTPS configurado', () => {
+test('feedback aparece após PDF e o convite de apoio exige link HTTPS', () => {
     const { context, elements } = editor();
     context.mostrarApoio();
-    assert.equal(elements.donationNotice.classList.contains('hidden'), true);
+    assert.equal(elements.donationNotice.classList.contains('hidden'), false);
+    assert.equal(elements.donationOffer.classList.contains('hidden'), true);
     context.mostrarApoio('http://example.test/doar');
-    assert.equal(elements.donationNotice.classList.contains('hidden'), true);
+    assert.equal(elements.donationOffer.classList.contains('hidden'), true);
     assert.match(elements.controlStatus.textContent, /indisponível/);
     context.mostrarApoio('https://example.test/doar');
-    assert.equal(elements.donationNotice.classList.contains('hidden'), false);
+    assert.equal(elements.donationOffer.classList.contains('hidden'), false);
     assert.equal(elements.donationLink.href, 'https://example.test/doar');
+});
+
+test('feedback prepara e-mail com texto codificado e não aceita mensagem vazia', () => {
+    const { context, clickedLinks } = editor();
+    const result = element();
+    const message = { value: '  Sugestão & melhoria\nOutra linha?  ' };
+    const form = { elements: { mensagem: message }, querySelector: () => result };
+    let prevented = false;
+    const event = { currentTarget: form, preventDefault() { prevented = true; } };
+    context.enviarFeedback(event);
+    const email = new URL(clickedLinks[0]);
+    assert.equal(prevented, true);
+    assert.equal(email.protocol, 'mailto:');
+    assert.equal(email.pathname, 'vg.guilherme@gmail.com');
+    assert.equal(email.searchParams.get('body'), 'Sugestão & melhoria\r\nOutra linha?');
+    assert.match(result.textContent, /confirma o envio/);
+    message.value = '   ';
+    context.enviarFeedback(event);
+    assert.equal(clickedLinks.length, 1);
+    assert.match(result.textContent, /Escreve uma mensagem/);
 });
 
 test('backup suporta várias experiências e rejeita uma entrada incompleta', async () => {
@@ -255,6 +280,8 @@ test('inatividade avisa antes de duas horas e apaga CV, prompt e foto após o pr
     const { context, elements, fields, setTime } = editor();
     fields[0].textContent = 'Dados temporários';
     elements.respostaInput.value = 'resposta';
+    elements.feedbackAfterPdf.value = 'Sugestão temporária';
+    elements.feedbackFooter.value = 'Outra sugestão temporária';
     elements.cvPhoto.src = 'data:image/png;base64,AAAA';
     elements.includePhoto.checked = true;
     setTime(115 * 60 * 1000);
@@ -265,6 +292,8 @@ test('inatividade avisa antes de duas horas e apaga CV, prompt e foto após o pr
     context.scheduleSession();
     assert.equal(fields[0].textContent, '');
     assert.equal(elements.respostaInput.value, '');
+    assert.equal(elements.feedbackAfterPdf.value, '');
+    assert.equal(elements.feedbackFooter.value, '');
     assert.equal(elements.cvPhoto.src, undefined);
     assert.equal(elements.includePhoto.checked, false);
     assert.match(elements.controlStatus.textContent, /inatividade/);

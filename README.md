@@ -33,9 +33,11 @@ O painel ✨ gera prompts sem chave API:
 
 A resposta de adaptação precisa de `cargo`, `resumo` e exatamente seis `competencias`, cada uma com `titulo` e `descricao`. Um bloco de código à volta do JSON é aceite. O utilizador deve confirmar a veracidade de qualquer conteúdo gerado por IA.
 
-## Contribuições voluntárias
+## Feedback e contribuições voluntárias
 
-Não há limite de downloads nem pagamento obrigatório. Para ativar o convite opcional após **Descarregar PDF**, define `DONATION_URL` em `editor.js` com um link público HTTPS de uma página de doação. Enquanto estiver vazio, o convite permanece oculto. O link abre o serviço escolhido noutro separador; consulta as condições e a política de privacidade desse serviço antes de o configurar.
+O feedback pode ser escrito no fim da página ou após **Descarregar PDF**. O botão prepara uma mensagem no aplicativo de e-mail do utilizador, que deve revê-la e confirmar o envio; é necessário ter um aplicativo de e-mail configurado. Se não abrir, o endereço de destino é mostrado junto ao campo. Não incluas dados pessoais ou o CV na mensagem. O feedback não é incluído no backup e o editor não o envia nem guarda automaticamente.
+
+Não há limite de downloads nem pagamento obrigatório. Para ativar o convite opcional de apoio após **Descarregar PDF**, define `DONATION_URL` em `editor.js` com um link público HTTPS de uma página de doação. Enquanto estiver vazio, só aparece o campo de feedback. O link abre o serviço escolhido noutro separador; consulta as condições e a política de privacidade desse serviço antes de o configurar.
 
 ## Testes
 

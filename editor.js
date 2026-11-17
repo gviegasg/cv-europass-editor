@@ -6,6 +6,7 @@ const LEGACY_HTML = 'cv_editor_html';
 const LEGACY_PHOTO = 'cv_editor_foto';
 const MAX_ENTRIES = 20;
 const DONATION_URL = '';
+const FEEDBACK_EMAIL = 'vg.guilherme@gmail.com';
 const BASE_FIELDS = ['nome', 'cargo', 'morada', 'email', 'telefone', 'resumo',
     ...Array.from({ length: 6 }, (_, index) => `competencia${index + 1}`)];
 const FONTS = [
@@ -555,9 +556,10 @@ function resetSession() {
     sessionRevision++;
     ajustarEntradas(3, 3);
     fields().forEach(field => { field.textContent = ''; });
-    for (const id of ['cvAtualInput', 'jobDescriptionInput', 'promptOutput', 'respostaInput', 'backupUpload', 'cvFileUpload', 'jobFileUpload', 'photoUpload']) {
+    for (const id of ['cvAtualInput', 'jobDescriptionInput', 'promptOutput', 'respostaInput', 'backupUpload', 'cvFileUpload', 'jobFileUpload', 'photoUpload', 'feedbackAfterPdf', 'feedbackFooter']) {
         document.getElementById(id).value = '';
     }
+    document.querySelectorAll('[data-feedback-status]').forEach(node => { node.textContent = ''; });
     document.getElementById('promptBox').classList.add('hidden');
     document.getElementById('aiResultBox').classList.add('hidden');
     document.getElementById('aiPanel').classList.remove('active');
@@ -647,6 +649,9 @@ async function gerarPDF() {
 }
 
 function mostrarApoio(link = DONATION_URL) {
+    document.getElementById('donationNotice').classList.remove('hidden');
+    const offer = document.getElementById('donationOffer');
+    offer.classList.add('hidden');
     if (!link) return;
     let url;
     try {
@@ -658,7 +663,29 @@ function mostrarApoio(link = DONATION_URL) {
         return;
     }
     document.getElementById('donationLink').href = url.href;
-    document.getElementById('donationNotice').classList.remove('hidden');
+    offer.classList.remove('hidden');
+}
+
+function enviarFeedback(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const message = form.elements.mensagem.value.trim();
+    const result = form.querySelector('[data-feedback-status]');
+    if (!message || message.length > 1500) {
+        result.textContent = '⚠️ Escreve uma mensagem com até 1500 caracteres.';
+        return;
+    }
+    try {
+        const subject = encodeURIComponent('Sugestão para o CV Editor');
+        const body = encodeURIComponent(message.replace(/\r?\n/g, '\r\n'));
+        const link = document.createElement('a');
+        link.href = `mailto:${FEEDBACK_EMAIL}?subject=${subject}&body=${body}`;
+        link.click();
+        result.textContent = `Revê e confirma o envio no teu aplicativo de e-mail. Se não abrir, envia a mensagem para ${FEEDBACK_EMAIL}.`;
+    } catch (error) {
+        console.error('Não foi possível preparar o e-mail:', error);
+        result.textContent = `⚠️ Não foi possível preparar o e-mail. Envia a mensagem para ${FEEDBACK_EMAIL}.`;
+    }
 }
 
 function toggleAiPanel() {
@@ -830,9 +857,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const field = event.target.closest('[data-field]');
         if (field && !field.innerText.trim()) field.textContent = '';
     });
-    for (const id of ['cvAtualInput', 'jobDescriptionInput', 'respostaInput']) {
+    for (const id of ['cvAtualInput', 'jobDescriptionInput', 'respostaInput', 'feedbackAfterPdf', 'feedbackFooter']) {
         document.getElementById(id).addEventListener('input', () => { dirty = true; });
     }
+    document.querySelectorAll('[data-feedback-email]').forEach(node => { node.textContent = FEEDBACK_EMAIL; });
     document.addEventListener('paste', event => {
         if (!event.target.closest('#cv-sheet [data-field]')) return;
         event.preventDefault();
