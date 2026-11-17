@@ -111,11 +111,20 @@ Este diário reúne os onze commits da branch `main` desde o primeiro até `10eb
 - A folha mantém o formato A4 na impressão e no PDF; os cartões de instruções se adaptam à largura da página.
 - O alinhamento foi medido no navegador em larguras de tela diferentes, e o PDF e a impressão foram verificados com dados de teste. Os 23 testes automatizados passaram.
 
-### Novo endereço e formulário de opinião
+### 17:56 — Novo endereço e formulário de opinião
+
+**Commit:** `84427d9`
 
 - O repositório e o endereço do GitHub Pages foram alterados para `cveditor`, e o link da versão online foi atualizado.
 - O formulário de opinião no rodapé teve a altura e o campo de texto reduzidos, mantendo a largura alinhada às demais seções.
 - Foram verificados o alinhamento e os quatro idiomas em tela pequena; os 23 testes automatizados passaram.
+
+### Orientações de preenchimento
+
+- O título principal ficou 25% menor em telas pequenas e grandes.
+- O primeiro cartão passou a sugerir que o texto seja preparado e salvo em um bloco de notas ou rascunho de e-mail, pois o site não guarda os dados, e orienta usar o celular na horizontal.
+- As orientações foram traduzidas para os quatro idiomas; a opção de backup continua disponível para salvar e restaurar o currículo editável.
+- A redução do título, os idiomas e os tamanhos de tela foram verificados no navegador; os 23 testes automatizados passaram.
 
 ## Situação e decisões registradas
 

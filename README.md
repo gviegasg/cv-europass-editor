@@ -7,7 +7,7 @@ Uma escrita clara e experiências relevantes para a vaga podem ajudar a chamar a
 
 ## Utilização
 
-Acede à versão online ou abre `index.html` num navegador moderno. A página inicial explica o processo e o editor está logo abaixo. Os textos em cinzento nos campos são orientações: não fazem parte do CV impresso.
+Acede à versão online ou abre `index.html` num navegador moderno. A página inicial explica o processo e o editor está logo abaixo. Os textos em cinzento nos campos são orientações: não fazem parte do CV impresso. Podes preparar e guardar o texto num bloco de notas ou rascunho de e-mail antes de preencher o editor, pois este não guarda os dados automaticamente. Num telemóvel, a orientação horizontal pode facilitar o preenchimento.
 
 1. Preenche os campos do currículo. O editor começa com seis competências, três experiências e três formações; os controlos permitem adicionar ou remover experiências e formações (até 20 por secção).
 2. Opcionalmente, escolhe uma fotografia JPEG ou PNG de **pelo menos 300 × 400 pixels**, com **até 5 MB**. A imagem é recortada verticalmente. Podes desmarcar **Incluir foto no CV** antes de imprimir.
