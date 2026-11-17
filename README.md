@@ -3,15 +3,17 @@
 Editor gratuito de currículo no navegador, com fotografia opcional, impressão em A4 e prompts para o chat de IA escolhido pelo utilizador.
 Uma escrita clara e experiências relevantes para a vaga podem ajudar a chamar a atenção dos recrutadores, sem garantir uma entrevista ou seleção.
 
+[Usar o CV Editor online](https://gviegasg.github.io/cv-europass-editor/) · [Diário de desenvolvimento](./DIARIO.md)
+
 ## Utilização
 
-Abre `index.html` num navegador moderno. A página inicial explica o processo e o editor está logo abaixo. Os textos em cinzento nos campos são orientações: não fazem parte do CV impresso.
+Acede à versão online ou abre `index.html` num navegador moderno. A página inicial explica o processo e o editor está logo abaixo. Os textos em cinzento nos campos são orientações: não fazem parte do CV impresso.
 
 1. Preenche os campos do currículo. O editor começa com seis competências, três experiências e três formações; os controlos permitem adicionar ou remover experiências e formações (até 20 por secção).
 2. Opcionalmente, escolhe uma fotografia JPEG ou PNG de **pelo menos 300 × 400 pixels**, com **até 5 MB**. A imagem é recortada verticalmente. Podes desmarcar **Incluir foto no CV** antes de imprimir.
 3. Ajusta a margem, a fonte e o tamanho diretamente nos controlos do editor. Se o conteúdo exceder uma página A4, surge um aviso; revê também a pré-visualização do navegador.
-4. Usa **Exportar backup** para guardar um ficheiro JSON com o CV, a fotografia e as configurações. **Importar backup** recupera esse ficheiro e substitui o CV da sessão após confirmação.
-5. Para gerar PDF, usa **Imprimir** e escolhe A4, margens nenhumas, escala 100% e sem cabeçalhos ou rodapés. Também podes usar **Descarregar PDF**.
+4. Usa **Exportar backup** para guardar um ficheiro JSON com o CV, a fotografia e as configurações. **Importar backup** recupera esse ficheiro e substitui o CV da sessão; se houver alterações na sessão, pede confirmação.
+5. Para gerar PDF, usa **Imprimir** e escolhe A4, margens nenhumas, escala 100% e sem cabeçalhos ou rodapés. Também podes usar **Descarregar PDF**, que gera o documento a partir de uma imagem e depende da biblioteca carregada pela internet. Para texto selecionável, prefere a impressão do navegador e verifica o PDF gerado.
 
 A página começa em português do Brasil e oferece português de Portugal, espanhol e inglês no seletor do cabeçalho. O idioma da página e o do CV são independentes; ambos começam em português do Brasil numa sessão nova. O idioma do CV altera os títulos e as orientações, mas **não traduz o texto escrito**. Escreve ou revê os teus dados no idioma escolhido. O idioma do CV é incluído nos novos backups. Backups anteriores continuam a funcionar; se não tiverem idioma, usam português de Portugal, e qualquer modelo anteriormente escolhido é ignorado.
 
@@ -19,7 +21,7 @@ A página começa em português do Brasil e oferece português de Portugal, espa
 
 O editor não grava o CV automaticamente nem o envia para um servidor. O conteúdo é mantido na memória da página e é descartado quando ela é atualizada ou fechada, ou após **duas horas de inatividade**. Ao regressar a uma página suspensa, o prazo de inatividade é verificado. Exporta um backup antes de sair.
 
-O backup e o PDF são ficheiros no dispositivo do utilizador: não são apagados pelo editor e podem conter dados pessoais. Ao copiar o prompt ou enviá-lo a um serviço de IA, os dados incluídos ficam na área de transferência ou são partilhados com esse serviço. A biblioteca de PDF é carregada de um CDN, que pode receber dados de ligação, como o endereço IP; o navegador verifica a integridade da versão utilizada.
+O backup e o PDF são ficheiros no dispositivo do utilizador: não são apagados pelo editor e podem conter dados pessoais. O backup não é cifrado e inclui a foto carregada mesmo que a sua inclusão no CV esteja desmarcada; guarda-o num local seguro. Ao copiar o prompt ou enviá-lo a um serviço de IA, os dados incluídos ficam na área de transferência ou são partilhados com esse serviço. A biblioteca de PDF é carregada de um CDN, que pode receber dados de ligação, como o endereço IP; o navegador verifica a integridade da versão utilizada.
 
 Uma versão anterior guardava rascunhos no navegador. Se existirem, o editor mostra opções para os recuperar, exportar ou apagar. Esses dados antigos permanecem no navegador até serem apagados pelo utilizador. A recuperação converte até seis competências e 20 experiências ou formações por secção. Se a fotografia antiga não cumprir os requisitos, podes recuperar apenas o texto; se a estrutura não puder ser convertida, exporta os dados antigos antes de os apagar.
 
