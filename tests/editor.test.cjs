@@ -262,7 +262,7 @@ test('feedback prepara e-mail com texto codificado e não aceita mensagem vazia'
     const email = new URL(clickedLinks[0]);
     assert.equal(prevented, true);
     assert.equal(email.protocol, 'mailto:');
-    assert.equal(email.pathname, 'vg.guilherme@gmail.com');
+    assert.equal(email.pathname, 'goal-splendid50@bravealias.com');
     assert.equal(email.searchParams.get('subject'), 'Feedback for CV Editor');
     assert.equal(email.searchParams.get('body'), 'Sugestão & melhoria\r\nOutra linha?');
     assert.match(result.textContent, /confirm sending/);
