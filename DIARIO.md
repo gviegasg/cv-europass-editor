@@ -135,6 +135,10 @@ Este diário reúne os onze commits da branch `main` desde o primeiro até `10eb
 - O painel do assistente passou a caber em telas estreitas; a edição do currículo em telas pequenas foi adaptada para leitura, sem alterar a impressão e o PDF A4.
 - Foram verificados, no Chromium, carregamento de TXT e DOCX, rejeição de PDF, idiomas, telas de celular, tablet e desktop, foto, aviso de excesso e PDF A4 de uma página. Os 24 testes automatizados passaram.
 
+### 21:08 — Ajuste do texto inicial
+
+- Foi retirada a expressão sobre não garantir a seleção do texto inicial, nos quatro idiomas da página.
+
 ## Situação e decisões registradas
 
 - O editor atual é uma aplicação estática no navegador, sem API de IA, conta, backend próprio ou armazenamento automático do currículo.
