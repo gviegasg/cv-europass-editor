@@ -119,18 +119,27 @@ Este diário reúne os onze commits da branch `main` desde o primeiro até `10eb
 - O formulário de opinião no rodapé teve a altura e o campo de texto reduzidos, mantendo a largura alinhada às demais seções.
 - Foram verificados o alinhamento e os quatro idiomas em tela pequena; os 23 testes automatizados passaram.
 
-### Orientações de preenchimento
+### 18:13 — Orientações de preenchimento
+
+**Commit:** `f89ec40`
 
 - O título principal ficou 25% menor em telas pequenas e grandes.
 - O primeiro cartão passou a sugerir que o texto seja preparado e salvo em um bloco de notas ou rascunho de e-mail, pois o site não guarda os dados, e orienta usar o celular na horizontal.
 - As orientações foram traduzidas para os quatro idiomas; a opção de backup continua disponível para salvar e restaurar o currículo editável.
 - A redução do título, os idiomas e os tamanhos de tela foram verificados no navegador; os 23 testes automatizados passaram.
 
+### 21:06 — Ficheiros de texto e revisão responsiva
+
+- O assistente passou a aceitar ficheiros `.txt` e `.docx` até 5 MB para o currículo e a vaga, com leitura no navegador. O texto carregado fica no assistente, não preenche automaticamente os campos.
+- Os controles e avisos para salvar ou recuperar arquivos de sessão foram removidos; os rascunhos antigos guardados no navegador ainda podem ser recuperados ou apagados.
+- O painel do assistente passou a caber em telas estreitas; a edição do currículo em telas pequenas foi adaptada para leitura, sem alterar a impressão e o PDF A4.
+- Foram verificados, no Chromium, carregamento de TXT e DOCX, rejeição de PDF, idiomas, telas de celular, tablet e desktop, foto, aviso de excesso e PDF A4 de uma página. Os 24 testes automatizados passaram.
+
 ## Situação e decisões registradas
 
 - O editor atual é uma aplicação estática no navegador, sem API de IA, conta, backend próprio ou armazenamento automático do currículo.
-- A IA é opcional e recebe os dados somente quando o usuário envia o prompt ao serviço escolhido. O backup e o PDF ficam no dispositivo e podem conter dados pessoais.
+- A IA é opcional e recebe os dados somente quando o usuário envia o prompt ao serviço escolhido. O PDF fica no dispositivo e pode conter dados pessoais.
 - Doações foram consideradas como contribuição voluntária; não há cobrança obrigatória nem limite diário de downloads. Publicidade e venda de banners foram discutidas, mas não foram implementadas.
-- Na avaliação de produto e usabilidade, ficaram como oportunidades a melhoria do painel em telas estreitas, dos rótulos acessíveis, da legibilidade e da qualidade textual do PDF direto. São itens de melhoria, não alterações concluídas neste diário.
+- Na avaliação de produto e usabilidade, ficaram como oportunidades melhorias adicionais de acessibilidade e da qualidade textual do PDF direto. São itens de melhoria, não alterações concluídas neste diário.
 
 Para registrar mudanças futuras, acrescenta uma entrada com data, commit, alterações, decisões e verificações realizadas, distinguindo o que foi planejado do que foi efetivamente publicado.

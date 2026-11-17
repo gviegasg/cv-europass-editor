@@ -2,9 +2,13 @@
   "private": true,
   "scripts": {
     "build:css": "tailwindcss -i ./tailwind.css -o ./styles.css --minify --content './index.html,./editor.js,./interface.js'",
-    "test": "node --test tests/editor.test.cjs"
+    "test": "node --test tests/editor.test.cjs",
+    "build:vendor": "esbuild node_modules/mammoth/lib/index.js --bundle --platform=browser --format=iife --global-name=mammoth --outfile=vendor/mammoth.browser.js && node scripts/vendor-licenses.cjs"
   },
   "devDependencies": {
+    "esbuild": "0.28.2",
+    "jszip": "3.10.2",
+    "mammoth": "1.13.0",
     "tailwindcss": "3.4.19"
   }
 }

@@ -61,6 +61,23 @@
         .fs-data        { font-size: 0.9em; }   /* Datas                 */
         .fs-mini        { font-size: 0.85em; }  /* Micro-texto           */
 
+        @media screen and (max-width: 639px) {
+            .cv-page:not(.exporting) { font-size: max(14px, var(--fonte-base)); }
+            .cv-page:not(.exporting) > .grid-cols-12:first-child { display: flex; flex-direction: column; }
+            .cv-page:not(.exporting) > .grid-cols-12:not(:first-child) { display: block; }
+            .cv-page:not(.exporting) > .grid-cols-12:not(:first-child) > .col-span-2 {
+                text-align: left;
+                border-right: 0;
+                padding-right: 0;
+                margin-bottom: 4px;
+            }
+            .cv-page:not(.exporting) > .grid-cols-12:not(:first-child) > .col-span-10 { padding-left: 0; }
+            .cv-page:not(.exporting) #personalData .grid-cols-2,
+            .cv-page:not(.exporting) #competenciasGrid { grid-template-columns: 1fr; }
+            .cv-page:not(.exporting) #experienceList > div > .flex { flex-wrap: wrap; }
+            .cv-page:not(.exporting) [data-field] { overflow-wrap: anywhere; }
+        }
+
         @page {
             size: A4 portrait;
             margin: 0; /* a margem real vem de --margem (padding da folha) */
@@ -179,12 +196,12 @@
                     <p class="text-xs font-bold uppercase tracking-wider text-[#004494]">01 · Edita</p>
                     <h3 class="mt-3 text-base font-bold text-slate-900">Preenche o currículo</h3>
                     <p class="mt-2 text-sm leading-relaxed text-slate-600">Como o site não guarda as tuas informações, escreve e guarda primeiro o texto num bloco de notas ou num rascunho de e-mail. Depois, preenche os campos abaixo e adiciona uma foto se quiseres.</p>
-                    <p class="mt-2 text-sm leading-relaxed text-slate-600">Se estiveres no telemóvel, usa-o na horizontal para facilitar o preenchimento.</p>
+                    <p class="mt-2 text-sm leading-relaxed text-slate-600">No telemóvel, a edição é adaptada ao ecrã; usa-o na horizontal se preferires. Confirma o formato no PDF.</p>
                 </article>
                 <article class="rounded-xl border border-slate-200 bg-white p-5">
                     <p class="text-xs font-bold uppercase tracking-wider text-[#004494]">02 · Adapta</p>
                     <h3 class="mt-3 text-base font-bold text-slate-900">Prepara com IA (opcional)</h3>
-                    <p class="mt-2 text-sm leading-relaxed text-slate-600">No botão ✨, cola ou carrega a vaga e, se quiseres, o teu CV (.txt ou .md). Gera o prompt de adaptação, copia-o e envia-o ao chat de IA que escolheres.</p>
+                    <p class="mt-2 text-sm leading-relaxed text-slate-600">No botão ✨, cola ou carrega a vaga e, se quiseres, o teu CV em .txt ou .docx. O texto fica no assistente; revê-o e gera o prompt para o chat de IA que escolheres.</p>
                 </article>
                 <article class="rounded-xl border border-slate-200 bg-white p-5">
                     <p class="text-xs font-bold uppercase tracking-wider text-[#004494]">03 · Revê</p>
@@ -194,10 +211,10 @@
                 <article class="rounded-xl border border-slate-200 bg-white p-5">
                     <p class="text-xs font-bold uppercase tracking-wider text-[#004494]">04 · Guarda</p>
                     <h3 class="mt-3 text-base font-bold text-slate-900">Guarda e gera o PDF</h3>
-                    <p class="mt-2 text-sm leading-relaxed text-slate-600">Antes de sair, usa Exportar backup para guardar uma cópia editável. Para candidaturas, escolhe Imprimir e guarda em PDF, ou usa Descarregar PDF.</p>
+                    <p class="mt-2 text-sm leading-relaxed text-slate-600">Para candidaturas, escolhe Imprimir e guarda em PDF, ou usa Descarregar PDF. Guarda também o texto noutro lugar: não é possível retomar a edição pelo PDF.</p>
                 </article>
             </div>
-            <p class="mt-5 text-xs leading-relaxed text-slate-600">O editor não guarda o CV automaticamente nem o envia para um servidor. Os dados desta sessão são descartados ao atualizar ou fechar a página, ou após 2 horas de inatividade. Exporta um backup para continuar mais tarde. O backup e o PDF ficam no teu dispositivo. Se enviares o prompt a um serviço de IA, estarás a partilhar com ele os dados incluídos. O site carrega a biblioteca de PDF de um fornecedor externo, que pode receber dados de ligação como o endereço IP.</p>
+            <p class="mt-5 text-xs leading-relaxed text-slate-600">O editor não guarda o CV automaticamente nem o envia para um servidor. Os dados desta sessão são descartados ao atualizar ou fechar a página, ou após 2 horas de inatividade. O PDF fica no teu dispositivo. Se enviares o prompt a um serviço de IA, estarás a partilhar com ele os dados incluídos. O site carrega a biblioteca de PDF de um fornecedor externo, que pode receber dados de ligação como o endereço IP.</p>
         </section>
     </main>
 
@@ -252,10 +269,6 @@
                 <label class="text-xs font-semibold text-slate-700">Tamanho (px)
                     <input id="fontSizeControl" type="number" min="8" max="18" step="0.5" value="10" class="mt-1 block w-20 rounded border border-slate-300 p-2 text-sm">
                 </label>
-                <button type="button" onclick="exportarBackup()" class="rounded border border-[#004494] px-3 py-2 text-xs font-semibold text-[#004494] hover:bg-blue-50">Exportar backup</button>
-                <label class="cursor-pointer rounded border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Importar backup
-                    <input id="backupUpload" type="file" accept=".json,application/json" class="sr-only" onchange="importarBackup(event)">
-                </label>
             </div>
             <div class="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-700">
                 <label class="font-semibold"><input id="includePhoto" type="checkbox" class="mr-1" onchange="alterarFoto()"> Incluir foto no CV</label>
@@ -284,7 +297,7 @@
                 <form onsubmit="enviarFeedback(event)" class="mt-3">
                     <label for="feedbackAfterPdf" class="font-semibold">Sugestão ou comentário (até 1500 caracteres)</label>
                     <textarea id="feedbackAfterPdf" name="mensagem" required maxlength="1500" autocomplete="off" rows="3" class="mt-1 block w-full rounded border border-slate-300 p-2 text-sm" placeholder="O que podemos melhorar?"></textarea>
-                    <p class="mt-1">Abre o teu aplicativo de e-mail para confirmares o envio a <span data-feedback-email class="font-semibold"></span>. Não incluas dados pessoais ou o teu CV. A mensagem não é incluída no backup.</p>
+                    <p class="mt-1">Abre o teu aplicativo de e-mail para confirmares o envio a <span data-feedback-email class="font-semibold"></span>. Não incluas dados pessoais ou o teu CV.</p>
                     <button type="submit" class="mt-2 rounded bg-[#004494] px-3 py-2 font-semibold text-white hover:bg-blue-800">Preparar e-mail</button>
                     <p data-feedback-status role="status" aria-live="polite" class="mt-2"></p>
                 </form>
@@ -293,10 +306,9 @@
             <p id="sessionWarning" class="hidden mt-3 rounded bg-amber-50 p-2 text-xs font-semibold text-amber-800" role="status" aria-live="polite"></p>
         </div>
         <div id="legacyNotice" class="hidden mt-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-900">
-            <p>Há um rascunho guardado pela versão anterior. Ele continua no navegador até ser recuperado ou apagado. Recupera-o e exporta um backup antes de o eliminares.</p>
+            <p>Há um rascunho guardado pela versão anterior. Ele continua no navegador até ser apagado. Recupera-o antes de o apagares.</p>
             <div class="mt-3 flex flex-wrap gap-3">
                 <button type="button" onclick="recuperarLegado()" class="font-semibold underline">Recuperar rascunho antigo</button>
-                <button type="button" onclick="exportarLegado()" class="font-semibold underline">Exportar dados antigos</button>
                 <button type="button" onclick="apagarLegado()" class="font-semibold underline">Apagar dados antigos</button>
             </div>
         </div>
@@ -375,7 +387,7 @@
             <form onsubmit="enviarFeedback(event)" class="mt-2">
                 <label for="feedbackFooter" class="text-sm font-semibold text-slate-700">Sugestão ou comentário (até 1500 caracteres)</label>
                 <textarea id="feedbackFooter" name="mensagem" required maxlength="1500" autocomplete="off" rows="3" class="mt-1 block w-full rounded border border-slate-300 p-2 text-sm" placeholder="Escreve aqui a tua mensagem"></textarea>
-                <p class="mt-1 text-xs text-slate-600">Abre o teu aplicativo de e-mail para confirmares o envio a <span data-feedback-email class="font-semibold"></span>. Não incluas dados pessoais ou o teu CV. A mensagem não é incluída no backup.</p>
+                <p class="mt-1 text-xs text-slate-600">Abre o teu aplicativo de e-mail para confirmares o envio a <span data-feedback-email class="font-semibold"></span>. Não incluas dados pessoais ou o teu CV.</p>
                 <button type="submit" class="mt-1 rounded bg-[#004494] px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">Preparar e-mail</button>
                 <p data-feedback-status role="status" aria-live="polite" class="mt-2 empty:mt-0 text-xs text-slate-700"></p>
             </form>
@@ -383,58 +395,60 @@
     </footer>
 
     <!-- 🤖 Assistente IA de Carreira (não imprime) -->
-    <div class="fixed bottom-6 right-6 z-50 no-print flex flex-col items-end">
-        <div id="aiPanel" class="ai-panel bg-white rounded-xl shadow-2xl border border-gray-200 w-80 sm:w-96 mb-4 p-5 hidden flex-col max-h-[85vh] overflow-y-auto">
+    <div class="fixed bottom-4 left-4 right-4 sm:bottom-6 sm:left-auto sm:right-6 z-50 no-print pointer-events-none flex flex-col items-end">
+        <div id="aiPanel" class="ai-panel bg-white rounded-xl shadow-2xl border border-gray-200 w-full max-w-[20rem] sm:w-96 sm:max-w-none mb-4 p-5 hidden flex-col max-h-[calc(100dvh-7rem)] sm:max-h-[calc(100dvh-7.5rem)] overflow-y-auto">
             <div class="flex justify-between items-center mb-3">
                 <h3 class="font-bold text-[#004494] flex items-center gap-2">
                     <span class="text-xl">✨</span> Coach de Carreira
                 </h3>
-                <button onclick="toggleAiPanel()" class="text-gray-400 hover:text-gray-600">
+                <button onclick="toggleAiPanel()" aria-label="Fechar assistente" class="text-gray-600 hover:text-gray-800">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                 </button>
             </div>
 
-            <p class="text-[10px] text-gray-500 mb-3 leading-snug">Sem chave API: gera um prompt, envia-o no teu chat de IA preferido (ChatGPT, Gemini, Copilot…) e, no caso da adaptação do CV, cola aqui a resposta para aplicar ao documento.</p>
+            <p class="text-xs text-gray-600 mb-3 leading-snug">Sem chave API: gera um prompt, envia-o no teu chat de IA preferido (ChatGPT, Gemini, Copilot…) e, no caso da adaptação do CV, cola aqui a resposta para aplicar ao documento.</p>
+            <p class="text-xs text-gray-600 mb-3 leading-snug">Aceita apenas ficheiros .txt ou .docx até 5 MB. O texto é lido no navegador e colocado no assistente, não preenche automaticamente o CV.</p>
 
-            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">1 · O teu CV atual (opcional)</label>
-            <textarea id="cvAtualInput" autocomplete="off" class="w-full text-xs p-3 border border-gray-300 rounded-lg mb-1 h-20 focus:outline-none focus:border-[#004494]" placeholder="Cola aqui o texto do teu CV atual. Se deixares vazio, uso o CV do documento ao lado."></textarea>
+            <label for="cvAtualInput" class="text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">1 · O teu CV atual (opcional)</label>
+            <textarea id="cvAtualInput" autocomplete="off" class="w-full text-base p-3 border border-gray-300 rounded-lg mb-1 h-20 focus:outline-none focus:border-[#004494]" placeholder="Cola aqui o texto do teu CV atual. Se deixares vazio, uso o CV do documento ao lado."></textarea>
             <div class="flex items-center gap-2 mb-3">
-                <input type="file" id="cvFileUpload" accept=".txt,.md" class="hidden" onchange="carregarTextoFicheiro(event, 'cvAtualInput', 'CV')">
-                <button onclick="document.getElementById('cvFileUpload').click()" class="text-[10px] text-[#004494] font-semibold hover:underline">📎 Carregar CV .txt ou .md</button>
+                <input type="file" id="cvFileUpload" accept=".txt,.docx,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="hidden" onchange="carregarTextoFicheiro(event, 'cvAtualInput', 'CV')">
+                <button type="button" onclick="document.getElementById('cvFileUpload').click()" class="text-xs text-[#004494] font-semibold hover:underline py-2">📎 Carregar CV .txt ou .docx</button>
             </div>
 
-            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">2 · Anúncio da vaga</label>
-            <textarea id="jobDescriptionInput" autocomplete="off" class="w-full text-xs p-3 border border-gray-300 rounded-lg mb-1 h-20 focus:outline-none focus:border-[#004494]" placeholder="Cola aqui o anúncio da vaga a que te candidatas"></textarea>
+            <label for="jobDescriptionInput" class="text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">2 · Anúncio da vaga</label>
+            <textarea id="jobDescriptionInput" autocomplete="off" class="w-full text-base p-3 border border-gray-300 rounded-lg mb-1 h-20 focus:outline-none focus:border-[#004494]" placeholder="Cola aqui o anúncio da vaga a que te candidatas"></textarea>
             <div class="flex items-center gap-2 mb-3">
-                <input type="file" id="jobFileUpload" accept=".txt,.md" class="hidden" onchange="carregarTextoFicheiro(event, 'jobDescriptionInput', 'anúncio da vaga')">
-                <button onclick="document.getElementById('jobFileUpload').click()" class="text-[10px] text-[#004494] font-semibold hover:underline">📎 Carregar vaga .txt ou .md</button>
+                <input type="file" id="jobFileUpload" accept=".txt,.docx,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="hidden" onchange="carregarTextoFicheiro(event, 'jobDescriptionInput', 'anúncio da vaga')">
+                <button type="button" onclick="document.getElementById('jobFileUpload').click()" class="text-xs text-[#004494] font-semibold hover:underline py-2">📎 Carregar vaga .txt ou .docx</button>
             </div>
 
-            <button onclick="gerarPrompt('adaptar')" class="w-full bg-gradient-to-r from-[#004494] to-indigo-600 text-white text-[11px] py-2.5 rounded-lg font-bold hover:opacity-90 transition mb-2">🎯 Gerar prompt: Adaptar CV à vaga</button>
+            <button onclick="gerarPrompt('adaptar')" class="w-full bg-gradient-to-r from-[#004494] to-indigo-600 text-white text-xs py-3 rounded-lg font-bold hover:opacity-90 transition mb-2">🎯 Gerar prompt: Adaptar CV à vaga</button>
             <div class="grid grid-cols-2 gap-2 mb-3">
-                <button onclick="gerarPrompt('entrevista')" class="bg-indigo-600 text-white text-[10px] py-2 rounded-lg font-bold hover:bg-indigo-700 transition">Prompt: Entrevista</button>
-                <button onclick="gerarPrompt('carta')" class="bg-[#004494] text-white text-[10px] py-2 rounded-lg font-bold hover:bg-blue-800 transition">Prompt: Carta</button>
+                <button onclick="gerarPrompt('entrevista')" class="bg-indigo-600 text-white text-xs py-3 rounded-lg font-bold hover:bg-indigo-700 transition">Prompt: Entrevista</button>
+                <button onclick="gerarPrompt('carta')" class="bg-[#004494] text-white text-xs py-3 rounded-lg font-bold hover:bg-blue-800 transition">Prompt: Carta</button>
             </div>
 
             <div id="promptBox" class="hidden">
-                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">3 · Prompt gerado — copia e envia na tua IA</label>
-                <textarea id="promptOutput" readonly autocomplete="off" class="w-full text-[10px] p-3 border border-gray-300 rounded-lg mb-1 h-24 bg-gray-50 focus:outline-none"></textarea>
-                <button id="btnCopiar" onclick="copiarPrompt()" class="w-full bg-gray-700 text-white text-[10px] py-2 rounded-lg font-bold hover:bg-gray-900 transition mb-3">📋 Copiar prompt</button>
+                <label for="promptOutput" class="text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">3 · Prompt gerado — copia e envia na tua IA</label>
+                <textarea id="promptOutput" readonly autocomplete="off" class="w-full text-base p-3 border border-gray-300 rounded-lg mb-1 h-24 bg-gray-50 focus:outline-none"></textarea>
+                <button id="btnCopiar" onclick="copiarPrompt()" class="w-full bg-gray-700 text-white text-xs py-3 rounded-lg font-bold hover:bg-gray-900 transition mb-3">📋 Copiar prompt</button>
             </div>
 
-            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">4 · Cola a resposta da IA (só para "Adaptar CV")</label>
-            <textarea id="respostaInput" autocomplete="off" class="w-full text-xs p-3 border border-gray-300 rounded-lg mb-2 h-20 focus:outline-none focus:border-[#004494]" placeholder='Cola aqui a resposta da IA (o JSON com cargo, resumo e competências)'></textarea>
-            <button onclick="aplicarResposta()" class="w-full bg-green-600 text-white text-[11px] py-2.5 rounded-lg font-bold hover:bg-green-700 transition">✅ Aplicar resposta ao CV</button>
+            <label for="respostaInput" class="text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">4 · Cola a resposta da IA (só para "Adaptar CV")</label>
+            <textarea id="respostaInput" autocomplete="off" class="w-full text-base p-3 border border-gray-300 rounded-lg mb-2 h-20 focus:outline-none focus:border-[#004494]" placeholder='Cola aqui a resposta da IA (o JSON com cargo, resumo e competências)'></textarea>
+            <button onclick="aplicarResposta()" class="w-full bg-green-600 text-white text-xs py-3 rounded-lg font-bold hover:bg-green-700 transition">✅ Aplicar resposta ao CV</button>
 
             <div id="aiResultBox" class="hidden flex-col mt-2 border-t pt-3" role="status" aria-live="polite">
-                <div id="aiOutputText" class="w-full text-[11px] p-3 bg-gray-50 rounded-lg whitespace-pre-wrap text-gray-700"></div>
+                <div id="aiOutputText" class="w-full text-xs p-3 bg-gray-50 rounded-lg whitespace-pre-wrap text-gray-700"></div>
             </div>
         </div>
-        <button onclick="toggleAiPanel()" aria-label="Abrir ou fechar assistente de carreira" title="Assistente de carreira" class="bg-gradient-to-r from-[#004494] to-indigo-600 text-white p-4 rounded-full shadow-2xl hover:scale-105 transition-transform flex items-center justify-center">
+        <button onclick="toggleAiPanel()" aria-label="Abrir ou fechar assistente de carreira" title="Assistente de carreira" class="pointer-events-auto bg-gradient-to-r from-[#004494] to-indigo-600 text-white p-4 rounded-full shadow-2xl hover:scale-105 transition-transform flex items-center justify-center">
             <span class="text-2xl">✨</span>
         </button>
     </div>
 
+    <script src="vendor/mammoth.browser.js"></script>
     <script src="interface.js"></script>
     <script src="editor.js"></script>
 </body>

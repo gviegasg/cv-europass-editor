@@ -3,6 +3,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
+const JSZip = require('jszip');
+const mammothContext = vm.createContext({ TextDecoder, Uint8Array, ArrayBuffer, setTimeout, clearTimeout, console });
+mammothContext.self = mammothContext;
+vm.runInContext(fs.readFileSync(path.join(__dirname, '../vendor/mammoth.browser.js'), 'utf8'), mammothContext);
+const mammoth = mammothContext.mammoth;
 
 const script = fs.readFileSync(path.join(__dirname, '../editor.js'), 'utf8');
 const interfaceScript = fs.readFileSync(path.join(__dirname, '../interface.js'), 'utf8');
@@ -37,7 +42,7 @@ function editor({ width = 300, height = 400 } = {}) {
     const ids = ['respostaInput', 'cargoAlvo', 'resumoTexto', 'cv-sheet', 'editorStatus', 'aiPanel',
         'aiOutputText', 'aiResultBox', 'marginControl', 'fontControl', 'fontSizeControl', 'cvPhoto',
         'includePhoto', 'photoColumn', 'personalData', 'controlStatus', 'sessionWarning', 'pageWarning',
-        'cvAtualInput', 'jobDescriptionInput', 'promptOutput', 'backupUpload', 'cvFileUpload', 'jobFileUpload', 'photoUpload',
+        'cvAtualInput', 'jobDescriptionInput', 'promptOutput', 'cvFileUpload', 'jobFileUpload', 'photoUpload',
         'promptBox', 'languageControl', 'donationNotice', 'donationOffer', 'donationLink', 'feedbackAfterPdf', 'feedbackFooter'];
     const elements = Object.fromEntries(ids.map(id => [id, element()]));
     const labels = ['address', 'email', 'phone', 'summary', 'skills', 'experience', 'education']
@@ -99,7 +104,7 @@ function resposta() {
     };
 }
 
-function backup(fields) {
+function draft(fields) {
     return {
         formato: 'cv-editor',
         versao: 1,
@@ -109,21 +114,67 @@ function backup(fields) {
     };
 }
 
-test('carrega o CV e a vaga a partir de ficheiros de texto', () => {
+async function docxDeTeste() {
+    const zip = new JSZip();
+    zip.file('[Content_Types].xml', '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
+    zip.file('_rels/.rels', '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
+    zip.file('word/document.xml', '<?xml version="1.0"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Currículo de teste</w:t></w:r></w:p><w:p><w:r><w:t>Segunda linha</w:t></w:r></w:p></w:body></w:document>');
+    return zip.generateAsync({ type: 'arraybuffer' });
+}
+
+test('carrega TXT e DOCX como texto no assistente', async () => {
     const { context, elements } = editor();
-    context.FileReader = class {
-        readAsText(file) {
-            this.result = file.text;
-            this.onload();
-            this.onloadend();
-        }
-    };
-    for (const [field, text] of [['cvAtualInput', 'CV de teste'], ['jobDescriptionInput', 'Vaga de teste']]) {
-        const target = { files: [{ text }], value: 'ficheiro' };
-        context.carregarTextoFicheiro({ target }, field, 'teste');
-        assert.equal(elements[field].value, text);
+    context.mammoth = mammoth;
+    const docx = await docxDeTeste();
+    for (const field of ['cvAtualInput', 'jobDescriptionInput']) {
+        const target = { files: [{ name: 'entrada.TXT', size: 15, text: async () => 'Texto de teste' }], value: 'ficheiro' };
+        await context.carregarTextoFicheiro({ target }, field, 'teste');
+        assert.equal(elements[field].value, 'Texto de teste');
+        assert.equal(target.value, '');
+        target.files = [{ name: 'entrada.docx', size: docx.byteLength, arrayBuffer: async () => docx }];
+        target.value = 'ficheiro';
+        await context.carregarTextoFicheiro({ target }, field, 'teste');
+        assert.match(elements[field].value, /Currículo de teste\n\nSegunda linha/);
         assert.equal(target.value, '');
     }
+});
+
+test('rejeita formatos não permitidos, ficheiros vazios, grandes ou DOCX inválidos sem substituir texto', async () => {
+    const { context, elements } = editor();
+    context.mammoth = mammoth;
+    elements.cvAtualInput.value = 'Texto preservado';
+    const invalid = [
+        [{ name: 'cv.pdf', size: 5 }, /\.txt ou \.docx/],
+        [{ name: 'cv.md', size: 5 }, /\.txt ou \.docx/],
+        [{ name: 'cv.txt', size: 0 }, /5 MB/],
+        [{ name: 'cv.txt', size: 5 * 1024 * 1024 + 1 }, /5 MB/],
+        [{ name: 'cv.txt', size: 3, text: async () => '   ' }, /texto legível/],
+        [{ name: 'cv.docx', size: 5, arrayBuffer: async () => new ArrayBuffer(5) }, /válido/]
+    ];
+    for (const [file, message] of invalid) {
+        await context.carregarTextoFicheiro({ target: { files: [file], value: 'ficheiro' } }, 'cvAtualInput', 'CV');
+        assert.equal(elements.cvAtualInput.value, 'Texto preservado');
+        assert.match(elements.aiOutputText.textContent, message);
+    }
+});
+
+test('leitura assíncrona não substitui edições recentes nem dados de uma sessão terminada', async () => {
+    const { context, elements, setTime } = editor();
+    let finish;
+    const target = { files: [{ name: 'cv.txt', size: 5, text: () => new Promise(resolve => { finish = resolve; }) }], value: 'ficheiro' };
+    const reading = context.carregarTextoFicheiro({ target }, 'cvAtualInput', 'CV');
+    elements.cvAtualInput.value = 'Edição recente';
+    finish('Texto antigo');
+    await reading;
+    assert.equal(elements.cvAtualInput.value, 'Edição recente');
+    assert.match(elements.aiOutputText.textContent, /mudou durante a leitura/);
+
+    const expiredReading = context.carregarTextoFicheiro({ target }, 'cvAtualInput', 'CV');
+    setTime(120 * 60 * 1000);
+    finish('Texto antigo');
+    await expiredReading;
+    assert.equal(elements.cvAtualInput.value, '');
+    assert.match(elements.aiOutputText.textContent, /sessão terminou/);
 });
 
 test('aplica resposta válida como texto e mantém campos editáveis', () => {
@@ -155,35 +206,35 @@ for (const [label, raw] of [
     });
 }
 
-test('valida o backup e impede campos, configurações e fotos inválidos', async () => {
+test('valida dados antigos e impede campos, configurações e fotos inválidos', async () => {
     const { context, fields } = editor();
-    const valid = backup(fields);
-    assert.equal(await context.validateBackup(valid), valid);
+    const valid = draft(fields);
+    assert.equal(await context.validateDraft(valid), valid);
     const invalidFields = { ...valid.campos };
     delete invalidFields.nome;
-    await assert.rejects(context.validateBackup({ ...valid, campos: invalidFields }), /campos esperados/);
-    await assert.rejects(context.validateBackup({ ...valid, configuracao: { ...valid.configuracao, margem: 0 } }), /inválidas/);
-    await assert.rejects(context.validateBackup({ ...valid, fotografia: { dados: 'javascript:alert(1)', incluir: true } }), /JPEG ou PNG/);
+    await assert.rejects(context.validateDraft({ ...valid, campos: invalidFields }), /campos esperados/);
+    await assert.rejects(context.validateDraft({ ...valid, configuracao: { ...valid.configuracao, margem: 0 } }), /inválidas/);
+    await assert.rejects(context.validateDraft({ ...valid, fotografia: { dados: 'javascript:alert(1)', incluir: true } }), /JPEG ou PNG/);
 });
 
-test('backup repõe texto e configurações sem interpretar HTML', () => {
+test('recuperação repõe texto e configurações sem interpretar HTML', () => {
     const { context, fields, elements } = editor();
-    const data = backup(fields);
+    const data = draft(fields);
     data.campos.nome = '<img src=x onerror=alert(1)>';
     data.configuracao.margem = 8;
-    context.applyBackup(data);
+    context.applyDraft(data);
     assert.equal(fields[0].textContent, data.campos.nome);
     assert.equal(elements.marginControl.value, 8);
     assert.equal(elements.languageControl.value, 'pt-PT');
 });
 
-test('idiomas alteram a apresentação sem modificar os textos e são restaurados do backup', async () => {
+test('idiomas alteram a apresentação sem modificar os textos recuperados', async () => {
     const { context, elements, fields, labels } = editor();
-    const data = backup(fields);
+    const data = draft(fields);
     data.campos.nome = 'Nome preservado';
     data.configuracao.idioma = 'es';
-    await context.validateBackup(data);
-    context.applyBackup(data);
+    await context.validateDraft(data);
+    context.applyDraft(data);
     assert.equal(elements['cv-sheet'].lang, 'es');
     assert.equal(labels[0].textContent, 'Dirección:');
     assert.equal(fields[0].textContent, 'Nome preservado');
@@ -195,22 +246,7 @@ test('idiomas alteram a apresentação sem modificar os textos e são restaurado
         assert.equal(labels[0].textContent, address);
         assert.equal(fields[0].textContent, 'Nome preservado');
     }
-    await assert.rejects(context.validateBackup({ ...data, configuracao: { ...data.configuracao, idioma: 'fr' } }), /inválidas/);
-});
-
-test('backups anteriores com modelo mantêm dados e idioma usando o formato único', async () => {
-    const { context, elements, fields } = editor();
-    for (const modelo of ['atual', 'europass']) {
-        const data = backup(fields);
-        data.campos.nome = 'Nome preservado';
-        data.configuracao.modelo = modelo;
-        data.configuracao.idioma = 'en';
-        await context.validateBackup(data);
-        context.applyBackup(data);
-        assert.equal(fields[0].textContent, 'Nome preservado');
-        assert.equal(elements.languageControl.value, 'en');
-        assert.equal(Object.hasOwn(context.sessionSettings(), 'modelo'), false);
-    }
+    await assert.rejects(context.validateDraft({ ...data, configuracao: { ...data.configuracao, idioma: 'fr' } }), /inválidas/);
 });
 
 test('converte rascunho legado preservando os dados do currículo', async () => {
@@ -307,18 +343,18 @@ test('feedback prepara e-mail com texto codificado e não aceita mensagem vazia'
     assert.match(result.textContent, /Write a message/);
 });
 
-test('backup suporta várias experiências e rejeita uma entrada incompleta', async () => {
+test('dados recuperados suportam várias experiências e rejeitam uma entrada incompleta', async () => {
     const { context, fields } = editor();
-    const data = backup(fields);
+    const data = draft(fields);
     for (const suffix of ['Cargo', 'Data', 'Empresa', 'Detalhes']) {
         data.campos[`experiencia4${suffix}`] = suffix;
     }
     data.campos.educacao4 = 'Curso adicional';
-    await context.validateBackup(data);
+    await context.validateDraft(data);
     assert.equal(context.entryCounts(data.campos).experiences, 4);
     assert.equal(context.entryCounts(data.campos).education, 4);
     delete data.campos.experiencia4Cargo;
-    await assert.rejects(context.validateBackup(data), /campos esperados/);
+    await assert.rejects(context.validateDraft(data), /campos esperados/);
 });
 
 test('fotografia exige JPEG/PNG e pelo menos 300 × 400 pixels', async () => {

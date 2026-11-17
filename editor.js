@@ -1,7 +1,8 @@
 const SESSION_LIMIT = 2 * 60 * 60 * 1000;
 const SESSION_WARNING = 5 * 60 * 1000;
 const PHOTO_LIMIT = 5 * 1024 * 1024;
-const BACKUP_LIMIT = 32 * 1024 * 1024;
+const TEXT_FILE_LIMIT = 5 * 1024 * 1024;
+const LEGACY_HTML_LIMIT = 32 * 1024 * 1024;
 const LEGACY_HTML = 'cv_editor_html';
 const LEGACY_PHOTO = 'cv_editor_foto';
 const MAX_ENTRIES = 20;
@@ -88,6 +89,7 @@ let dirty = false;
 let photoData = null;
 let sessionRevision = 0;
 let photoRevision = 0;
+const textFileRevisions = Object.create(null);
 
 function checkSession(revision) {
     if (Date.now() - lastActivity >= SESSION_LIMIT) scheduleSession();
@@ -121,12 +123,12 @@ function entryCounts(data) {
     const experiences = count(/^experiencia(\d+)(?:Cargo|Data|Empresa|Detalhes)$/);
     const education = count(/^educacao(\d+)$/);
     if (experiences < 1 || experiences > MAX_ENTRIES || education < 1 || education > MAX_ENTRIES) {
-        throw new Error('O backup deve ter entre 1 e 20 experiências e formações.');
+        throw new Error('Os dados devem ter entre 1 e 20 experiências e formações.');
     }
     const expected = fieldKeys(experiences, education);
     if (keys.length !== expected.length ||
         expected.some(key => typeof data[key] !== 'string' || data[key].length > 100000)) {
-        throw new Error('O backup não contém todos os campos esperados.');
+        throw new Error('Os dados não contêm todos os campos esperados.');
     }
     return { experiences, education };
 }
@@ -195,7 +197,7 @@ function validateSettings(settings) {
         !FONTS.includes(settings.fonte) || !Number.isFinite(settings.tamanho) ||
         settings.tamanho < 8 || settings.tamanho > 18 ||
         (settings.idioma !== undefined && !Object.hasOwn(CV_LANGUAGES, settings.idioma))) {
-        throw new Error('O backup contém configurações de idioma, margem ou fonte inválidas.');
+        throw new Error('As configurações de idioma, margem ou fonte são inválidas.');
     }
 }
 
@@ -354,89 +356,35 @@ function removerFoto() {
     status('Foto removida.');
 }
 
-function saveFile(filename, content) {
-    const url = URL.createObjectURL(new Blob([content], { type: 'application/json' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-async function exportarBackup() {
-    const revision = sessionRevision;
-    try {
-        const configuracao = sessionSettings();
-        validateSettings(configuracao);
-        const backup = {
-            formato: 'cv-editor',
-            versao: 1,
-            campos: currentFields(),
-            configuracao,
-            fotografia: photoData ? { dados: photoData, incluir: document.getElementById('includePhoto').checked } : null
-        };
-        await validateBackup(backup);
-        checkSession(revision);
-        const content = JSON.stringify(backup, null, 2);
-        if (new Blob([content]).size > BACKUP_LIMIT) throw new Error('O backup excede o limite de 32 MB.');
-        saveFile('cv-backup.json', content);
-        status('Backup criado. Guarda-o num local seguro: contém os teus dados pessoais.');
-    } catch (error) {
-        status('⚠️ Não foi possível criar o backup: ' + error.message);
+async function validateDraft(draft) {
+    if (!draft || draft.formato !== 'cv-editor' || draft.versao !== 1 ||
+        !draft.campos || typeof draft.campos !== 'object' || Array.isArray(draft.campos)) {
+        throw new Error('Os dados antigos não são válidos.');
     }
-}
-
-async function validateBackup(backup) {
-    if (!backup || backup.formato !== 'cv-editor' || backup.versao !== 1 ||
-        !backup.campos || typeof backup.campos !== 'object' || Array.isArray(backup.campos)) {
-        throw new Error('O ficheiro não é um backup válido deste editor.');
-    }
-    entryCounts(backup.campos);
-    validateSettings(backup.configuracao);
-    if (backup.fotografia !== null) {
-        if (!backup.fotografia || typeof backup.fotografia.incluir !== 'boolean') {
-            throw new Error('Os dados da fotografia no backup são inválidos.');
+    entryCounts(draft.campos);
+    validateSettings(draft.configuracao);
+    if (draft.fotografia !== null) {
+        if (!draft.fotografia || typeof draft.fotografia.incluir !== 'boolean') {
+            throw new Error('Os dados da fotografia são inválidos.');
         }
-        await validarFoto(backup.fotografia.dados);
+        await validarFoto(draft.fotografia.dados);
     }
-    return backup;
+    return draft;
 }
 
-function applyBackup(backup) {
-    const counts = entryCounts(backup.campos);
+function applyDraft(draft) {
+    const counts = entryCounts(draft.campos);
     ajustarEntradas(counts.experiences, counts.education);
-    for (const field of fields()) field.textContent = backup.campos[field.dataset.field];
+    for (const field of fields()) field.textContent = draft.campos[field.dataset.field];
     photoRevision++;
-    photoData = backup.fotografia?.dados || null;
+    photoData = draft.fotografia?.dados || null;
     const photo = document.getElementById('cvPhoto');
     if (photoData) photo.src = photoData;
     else photo.removeAttribute('src');
-    document.getElementById('includePhoto').checked = backup.fotografia?.incluir || false;
+    document.getElementById('includePhoto').checked = draft.fotografia?.incluir || false;
     alterarFoto();
-    applySettings(backup.configuracao);
+    applySettings(draft.configuracao);
     dirty = true;
-}
-
-async function importarBackup(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const revision = sessionRevision;
-    try {
-        if (file.size > BACKUP_LIMIT) throw new Error('O backup excede o limite de 32 MB.');
-        const data = JSON.parse(await file.text());
-        const backup = data.formato === 'cv-editor-legado' && data.versao === 1
-            ? await converterLegado(data.html, data.foto) : await validateBackup(data);
-        checkSession(revision);
-        if (dirty && !confirm(traduzirMensagem('Importar o backup substituirá o CV atual. Continua?'))) return;
-        checkSession(revision);
-        applyBackup(backup);
-        status('Backup importado para esta sessão. Exporta-o novamente para guardar futuras alterações.');
-    } catch (error) {
-        console.error('Erro ao importar backup:', error);
-        status('⚠️ Não foi possível importar o backup: ' + error.message);
-    } finally {
-        event.target.value = '';
-    }
 }
 
 function legacyData() {
@@ -453,19 +401,8 @@ function atualizarAvisoLegado() {
     }
 }
 
-function exportarLegado() {
-    try {
-        const old = legacyData();
-        if (!old.html && !old.foto) throw new Error('Não existem dados antigos.');
-        saveFile('cv-backup-antigo.json', JSON.stringify({ formato: 'cv-editor-legado', versao: 1, ...old }));
-        status('Dados antigos exportados. Guarda o ficheiro num local seguro.');
-    } catch (error) {
-        status('⚠️ Não foi possível exportar os dados antigos: ' + error.message);
-    }
-}
-
 function apagarLegado() {
-    if (!confirm(traduzirMensagem('Apagar definitivamente os dados guardados pela versão anterior? Exporta-os primeiro se precisares deles.'))) return;
+    if (!confirm(traduzirMensagem('Apagar definitivamente os dados guardados pela versão anterior? Recupera-os primeiro se precisares deles.'))) return;
     try {
         localStorage.removeItem(LEGACY_HTML);
         localStorage.removeItem(LEGACY_PHOTO);
@@ -478,7 +415,7 @@ function apagarLegado() {
 }
 
 async function converterLegado(html, foto) {
-    if (typeof html !== 'string' || html.length > BACKUP_LIMIT) {
+    if (typeof html !== 'string' || html.length > LEGACY_HTML_LIMIT) {
         throw new Error('O rascunho antigo não contém um CV reconhecível.');
     }
     // O conteúdo do template permanece inerte e nunca é inserido na página.
@@ -492,7 +429,7 @@ async function converterLegado(html, foto) {
     const studies = blocks[5]?.querySelectorAll(':scope > .col-span-10 > div');
     if (!root.querySelector('h1') || !root.querySelector('#cargoAlvo') || !summary || !jobs || !studies ||
         skills.length > 6 || jobs.length > MAX_ENTRIES || studies.length > MAX_ENTRIES) {
-        throw new Error('O formato antigo não pôde ser convertido sem perda. Exporta os dados antigos antes de os apagar.');
+        throw new Error('O formato antigo não pôde ser convertido sem perda.');
     }
     const text = node => node?.textContent?.trim() || '';
     const blank = Object.fromEntries(fieldKeys(Math.max(1, jobs.length), Math.max(1, studies.length))
@@ -522,12 +459,12 @@ async function converterLegado(html, foto) {
             await validarFoto(image);
         } catch (error) {
             if (!confirm(traduzirMensagem('A fotografia antiga não cumpre os requisitos atuais. Recuperar os textos sem a fotografia? Os dados antigos não serão apagados.'))) {
-                throw new Error('Recuperação cancelada. Exporta os dados antigos antes de os apagar.');
+                throw new Error('Recuperação cancelada.');
             }
             image = null;
         }
     }
-    return validateBackup({
+    return validateDraft({
         formato: 'cv-editor', versao: 1, campos: blank,
         configuracao: { margem: 10, fonte: FONTS[0], tamanho: 10 },
         fotografia: image ? { dados: image, incluir: true } : null
@@ -538,12 +475,12 @@ async function recuperarLegado() {
     const revision = sessionRevision;
     try {
         const old = legacyData();
-        const backup = await converterLegado(old.html, old.foto);
+        const draft = await converterLegado(old.html, old.foto);
         checkSession(revision);
         if (dirty && !confirm(traduzirMensagem('Recuperar o rascunho substituirá o CV atual. Continua?'))) return;
         checkSession(revision);
-        applyBackup(backup);
-        status('Rascunho recuperado. Exporta um backup e depois apaga os dados antigos usando o aviso acima.');
+        applyDraft(draft);
+        status('Rascunho recuperado. Copia e guarda o texto noutro lugar antes de apagares os dados antigos.');
     } catch (error) {
         console.error('Erro ao recuperar rascunho antigo:', error);
         status('⚠️ ' + error.message + ' Os dados antigos não foram apagados.');
@@ -554,7 +491,7 @@ function resetSession() {
     sessionRevision++;
     ajustarEntradas(3, 3);
     fields().forEach(field => { field.textContent = ''; });
-    for (const id of ['cvAtualInput', 'jobDescriptionInput', 'promptOutput', 'respostaInput', 'backupUpload', 'cvFileUpload', 'jobFileUpload', 'photoUpload', 'feedbackAfterPdf', 'feedbackFooter']) {
+    for (const id of ['cvAtualInput', 'jobDescriptionInput', 'promptOutput', 'respostaInput', 'cvFileUpload', 'jobFileUpload', 'photoUpload', 'feedbackAfterPdf', 'feedbackFooter']) {
         document.getElementById(id).value = '';
     }
     document.querySelectorAll('[data-feedback-status]').forEach(node => { mostrarMensagem(node, ''); });
@@ -570,7 +507,7 @@ function resetSession() {
 }
 
 function reporOriginal() {
-    if (!confirm(traduzirMensagem('Apagar o CV e os dados desta sessão? Exporta um backup primeiro se precisares deles.'))) return;
+    if (!confirm(traduzirMensagem('Apagar o CV e os dados desta sessão? Esta ação não pode ser desfeita.'))) return;
     resetSession();
     status('Dados desta sessão apagados.');
 }
@@ -581,12 +518,12 @@ function scheduleSession() {
     const warning = document.getElementById('sessionWarning');
     if (remaining <= 0) {
         resetSession();
-        status('Sessão apagada após 2 horas de inatividade. Podes importar um backup para continuar.');
+        status('Sessão apagada após 2 horas de inatividade.');
         warning.classList.add('hidden');
         lastActivity = Date.now();
         sessionTimer = setTimeout(scheduleSession, SESSION_LIMIT - SESSION_WARNING);
     } else if (remaining <= SESSION_WARNING) {
-        mostrarMensagem(warning, 'A sessão será apagada após 2 horas de inatividade. Interage com a página para continuar e exporta um backup.');
+        mostrarMensagem(warning, 'A sessão será apagada após 2 horas de inatividade. Interage com a página para continuar.');
         warning.classList.remove('hidden');
         sessionTimer = setTimeout(scheduleSession, remaining);
     } else {
@@ -698,24 +635,43 @@ function toggleAiPanel() {
     }
 }
 
-function carregarTextoFicheiro(event, campo, descricao) {
+async function carregarTextoFicheiro(event, campo, descricao) {
     const file = event.target.files?.[0];
     if (!file) return;
+    event.target.value = '';
     const revision = sessionRevision;
-    const reader = new FileReader();
-    reader.onload = () => {
-        try {
-            checkSession(revision);
-        } catch (error) {
-            mostrarResultado('⚠️ ' + error.message);
-            return;
+    const uploadRevision = textFileRevisions[campo] = (textFileRevisions[campo] || 0) + 1;
+    const target = document.getElementById(campo);
+    const original = target.value;
+    try {
+        if (!/\.(txt|docx)$/i.test(file.name)) throw new Error('Escolhe um ficheiro .txt ou .docx.');
+        if (!file.size || file.size > TEXT_FILE_LIMIT) throw new Error('O ficheiro deve ter conteúdo e no máximo 5 MB.');
+        let text;
+        if (/\.docx$/i.test(file.name)) {
+            if (typeof mammoth === 'undefined') throw new Error('A leitura de DOCX está indisponível.');
+            text = (await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })).value;
+        } else {
+            text = await file.text();
         }
-        document.getElementById(campo).value = reader.result;
+        checkSession(revision);
+        if (uploadRevision !== textFileRevisions[campo]) return;
+        if (target.value !== original) throw new Error('O texto mudou durante a leitura. Escolhe novamente o ficheiro.');
+        if (!text.trim()) throw new Error('O ficheiro não contém texto legível.');
+        target.value = text;
         dirty = true;
-    };
-    reader.onerror = () => mostrarResultado(`⚠️ Não foi possível ler o ficheiro de ${descricao}.`);
-    reader.onloadend = () => { event.target.value = ''; };
-    reader.readAsText(file);
+    } catch (error) {
+        if (uploadRevision !== textFileRevisions[campo]) return;
+        console.error('Não foi possível ler o ficheiro:', error);
+        const detail = [
+            'Escolhe um ficheiro .txt ou .docx.',
+            'O ficheiro deve ter conteúdo e no máximo 5 MB.',
+            'A leitura de DOCX está indisponível.',
+            'O texto mudou durante a leitura. Escolhe novamente o ficheiro.',
+            'O ficheiro não contém texto legível.',
+            'A sessão terminou durante a operação. Tenta novamente.'
+        ].includes(error.message) ? error.message : 'Verifica se o ficheiro é válido.';
+        mostrarResultado(`⚠️ Não foi possível ler o ficheiro de ${descricao}. ${detail}`);
+    }
 }
 
 function mostrarResultado(texto) {
@@ -803,7 +759,7 @@ function aplicarResposta() {
     dirty = true;
     verificarPagina();
     const message = document.getElementById('editorStatus');
-    mostrarMensagem(message, '✅ Cargo, resumo e competências atualizados nesta sessão. Revê o CV e exporta um backup para o guardar.');
+    mostrarMensagem(message, '✅ Cargo, resumo e competências atualizados nesta sessão. Revê o CV antes de gerar o PDF.');
     message.hidden = false;
     const panel = document.getElementById('aiPanel');
     panel.classList.remove('active');
