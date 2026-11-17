@@ -12,7 +12,7 @@ Abre `index.html` num navegador moderno. A página inicial explica o processo e 
 4. Usa **Exportar backup** para guardar um ficheiro JSON com o CV, a fotografia e as configurações. **Importar backup** recupera esse ficheiro e substitui o CV da sessão após confirmação.
 5. Para gerar PDF, usa **Imprimir** e escolhe A4, margens nenhumas, escala 100% e sem cabeçalhos ou rodapés. Também podes usar **Descarregar PDF**.
 
-Escolhe entre o modelo atual e um modelo inspirado no Europass (não oficial), sem perder os dados. O idioma do CV pode ser português de Portugal, português do Brasil, espanhol ou inglês: altera os títulos e as orientações, mas **não traduz o texto escrito**. Escreve ou revê os teus dados no idioma escolhido. O idioma e o modelo são incluídos nos novos backups; backups anteriores continuam a funcionar e usam o modelo atual em português de Portugal.
+O idioma do CV pode ser português de Portugal, português do Brasil, espanhol ou inglês: altera os títulos e as orientações, mas **não traduz o texto escrito**. Escreve ou revê os teus dados no idioma escolhido. O idioma é incluído nos novos backups. Backups anteriores continuam a funcionar; se não tiverem idioma, usam português de Portugal, e qualquer modelo anteriormente escolhido é ignorado.
 
 ## Privacidade e duração da sessão
 

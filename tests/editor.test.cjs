@@ -37,7 +37,7 @@ function editor({ width = 300, height = 400 } = {}) {
         'aiOutputText', 'aiResultBox', 'marginControl', 'fontControl', 'fontSizeControl', 'cvPhoto',
         'includePhoto', 'photoColumn', 'personalData', 'controlStatus', 'sessionWarning', 'pageWarning',
         'cvAtualInput', 'jobDescriptionInput', 'promptOutput', 'backupUpload', 'cvFileUpload', 'jobFileUpload', 'photoUpload',
-        'promptBox', 'layoutControl', 'languageControl', 'donationNotice', 'donationLink'];
+        'promptBox', 'languageControl', 'donationNotice', 'donationLink'];
     const elements = Object.fromEntries(ids.map(id => [id, element()]));
     const labels = ['address', 'email', 'phone', 'summary', 'skills', 'experience', 'education']
         .map(key => Object.assign(element(), { dataset: { cvLabel: key } }));
@@ -53,7 +53,6 @@ function editor({ width = 300, height = 400 } = {}) {
     elements.marginControl.value = '10';
     elements.fontControl.value = 'Arial, Helvetica, sans-serif';
     elements.fontSizeControl.value = '10';
-    elements.layoutControl.value = 'atual';
     elements.languageControl.value = 'pt-PT';
     const storage = new Map();
     const context = vm.createContext({
@@ -169,19 +168,16 @@ test('backup repõe texto e configurações sem interpretar HTML', () => {
     context.applyBackup(data);
     assert.equal(fields[0].textContent, data.campos.nome);
     assert.equal(elements.marginControl.value, 8);
-    assert.equal(elements.layoutControl.value, 'atual');
     assert.equal(elements.languageControl.value, 'pt-PT');
 });
 
-test('modelo e idiomas alteram a apresentação sem modificar os textos e são restaurados do backup', async () => {
+test('idiomas alteram a apresentação sem modificar os textos e são restaurados do backup', async () => {
     const { context, elements, fields, labels } = editor();
     const data = backup(fields);
     data.campos.nome = 'Nome preservado';
-    data.configuracao.modelo = 'europass';
     data.configuracao.idioma = 'es';
     await context.validateBackup(data);
     context.applyBackup(data);
-    assert.equal(elements['cv-sheet'].classList.contains('layout-europass'), true);
     assert.equal(elements['cv-sheet'].lang, 'es');
     assert.equal(labels[0].textContent, 'Dirección:');
     assert.equal(fields[0].textContent, 'Nome preservado');
@@ -189,13 +185,26 @@ test('modelo e idiomas alteram a apresentação sem modificar os textos e são r
     assert.equal(fields.find(field => field.dataset.field === 'experiencia2Cargo').attributes['aria-label'], 'Puesto de la experiencia 2');
 
     for (const [idioma, address] of [['pt-BR', 'Endereço:'], ['en', 'Address:'], ['pt-PT', 'Morada:']]) {
-        context.applySettings({ ...data.configuracao, idioma, modelo: 'atual' });
+        context.applySettings({ ...data.configuracao, idioma });
         assert.equal(labels[0].textContent, address);
         assert.equal(fields[0].textContent, 'Nome preservado');
-        assert.equal(elements['cv-sheet'].classList.contains('layout-europass'), false);
     }
     await assert.rejects(context.validateBackup({ ...data, configuracao: { ...data.configuracao, idioma: 'fr' } }), /inválidas/);
-    await assert.rejects(context.validateBackup({ ...data, configuracao: { ...data.configuracao, modelo: 'outro' } }), /inválidas/);
+});
+
+test('backups anteriores com modelo mantêm dados e idioma usando o formato único', async () => {
+    const { context, elements, fields } = editor();
+    for (const modelo of ['atual', 'europass']) {
+        const data = backup(fields);
+        data.campos.nome = 'Nome preservado';
+        data.configuracao.modelo = modelo;
+        data.configuracao.idioma = 'en';
+        await context.validateBackup(data);
+        context.applyBackup(data);
+        assert.equal(fields[0].textContent, 'Nome preservado');
+        assert.equal(elements.languageControl.value, 'en');
+        assert.equal(Object.hasOwn(context.sessionSettings(), 'modelo'), false);
+    }
 });
 
 test('o prompt pede a resposta no idioma selecionado', () => {

@@ -189,7 +189,6 @@ function sessionSettings() {
         margem: Number(document.getElementById('marginControl').value),
         fonte: document.getElementById('fontControl').value,
         tamanho: Number(document.getElementById('fontSizeControl').value),
-        modelo: document.getElementById('layoutControl').value,
         idioma: document.getElementById('languageControl').value
     };
 }
@@ -198,9 +197,8 @@ function validateSettings(settings) {
     if (!settings || !Number.isFinite(settings.margem) || settings.margem < 5 || settings.margem > 25 ||
         !FONTS.includes(settings.fonte) || !Number.isFinite(settings.tamanho) ||
         settings.tamanho < 8 || settings.tamanho > 18 ||
-        (settings.modelo !== undefined && !['atual', 'europass'].includes(settings.modelo)) ||
         (settings.idioma !== undefined && !Object.hasOwn(CV_LANGUAGES, settings.idioma))) {
-        throw new Error('O backup contém configurações de modelo, idioma, margem ou fonte inválidas.');
+        throw new Error('O backup contém configurações de idioma, margem ou fonte inválidas.');
     }
 }
 
@@ -231,14 +229,11 @@ function aplicarIdioma(idioma) {
 
 function applySettings(settings) {
     validateSettings(settings);
-    const modelo = settings.modelo === undefined ? 'atual' : settings.modelo;
     const idioma = settings.idioma === undefined ? 'pt-PT' : settings.idioma;
     document.getElementById('marginControl').value = settings.margem;
     document.getElementById('fontControl').value = settings.fonte;
     document.getElementById('fontSizeControl').value = settings.tamanho;
-    document.getElementById('layoutControl').value = modelo;
     document.getElementById('languageControl').value = idioma;
-    document.getElementById('cv-sheet').classList.toggle('layout-europass', modelo === 'europass');
     aplicarIdioma(idioma);
     const root = document.documentElement.style;
     root.setProperty('--margem', `${settings.margem}mm`);
@@ -824,7 +819,7 @@ function aplicarResposta() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    for (const id of ['marginControl', 'fontControl', 'fontSizeControl', 'layoutControl', 'languageControl']) {
+    for (const id of ['marginControl', 'fontControl', 'fontSizeControl', 'languageControl']) {
         document.getElementById(id).addEventListener('input', atualizarConfiguracao);
     }
     document.getElementById('cv-sheet').addEventListener('input', () => {
