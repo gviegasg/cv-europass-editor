@@ -1,6 +1,7 @@
 # CV Editor
 
 Editor gratuito de currículo no navegador, com fotografia opcional, impressão em A4 e prompts para o chat de IA escolhido pelo utilizador.
+Uma escrita clara e experiências relevantes para a vaga podem ajudar a chamar a atenção dos recrutadores, sem garantir uma entrevista ou seleção.
 
 ## Utilização
 
