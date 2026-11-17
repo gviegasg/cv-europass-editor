@@ -1,6 +1,6 @@
 # Diário de desenvolvimento — CV Editor
 
-Este diário reúne os dez commits disponíveis na branch `main`, desde o primeiro commit até `0a4cbe3`, e marcos de publicação e decisões documentados durante o desenvolvimento. As datas e horas abaixo estão em **UTC**. O histórico disponível não permite reconstruir trabalhos anteriores ao primeiro commit ou versões que não tenham sido preservadas.
+Este diário reúne os onze commits da branch `main` desde o primeiro até `10eb63f`, além de marcos e alterações posteriores documentados durante o desenvolvimento. As datas e horas abaixo estão em **UTC**. O histórico disponível não permite reconstruir trabalhos anteriores ao primeiro commit ou versões que não tenham sido preservadas.
 
 ## 16 de novembro de 2026
 
@@ -96,10 +96,18 @@ Este diário reúne os dez commits disponíveis na branch `main`, desde o primei
 - O passo a passo foi organizado em quatro etapas: preencher ou recuperar, preparar com IA opcional, aplicar e conferir, e salvar backup e PDF.
 - Os textos foram atualizados nos quatro idiomas e os estilos regenerados. Foram verificados os idiomas, a preservação de conteúdo e tamanhos de tela diferentes; 23 testes passaram e a atualização foi publicada.
 
-### Registro posterior — Diário e revisão do README
+### 17:34 — Diário e revisão do README
+
+**Commit:** `10eb63f`
 
 - Foi elaborado este diário a partir do histórico acessível, dos registros de implantação e das decisões documentadas durante o projeto.
 - O README foi revisto e complementado com o link da versão online, o acesso a este diário e esclarecimentos sobre segurança do backup e as duas formas de gerar PDF.
+
+### Alinhamento das seções da página
+
+- O cabeçalho, a apresentação, os controles do editor e o rodapé passaram a compartilhar as mesmas bordas laterais da folha do currículo, com espaço nas laterais em telas pequenas.
+- A folha mantém o formato A4 na impressão e no PDF; os cartões de instruções se adaptam à largura da página.
+- O alinhamento foi medido no navegador em larguras de tela diferentes, e o PDF e a impressão foram verificados com dados de teste. Os 23 testes automatizados passaram.
 
 ## Situação e decisões registradas
 
