@@ -5,6 +5,7 @@ const test = require('node:test');
 const vm = require('node:vm');
 
 const script = fs.readFileSync(path.join(__dirname, '../editor.js'), 'utf8');
+const interfaceScript = fs.readFileSync(path.join(__dirname, '../interface.js'), 'utf8');
 
 function element() {
     let text = '';
@@ -83,6 +84,7 @@ function editor({ width = 300, height = 400 } = {}) {
         console: { error() {} },
         confirm: () => true
     });
+    vm.runInContext(interfaceScript, context);
     vm.runInContext(script, context);
     context.verificarPagina = () => false;
     context.ajustarEntradas = () => {};
@@ -217,7 +219,22 @@ test('o prompt pede a resposta no idioma selecionado', () => {
     elements.jobDescriptionInput.value = 'Vaga de teste';
     elements.languageControl.value = 'en';
     context.gerarPrompt('adaptar');
-    assert.match(elements.promptOutput.value, /Escreve em inglês/);
+    assert.match(elements.promptOutput.value, /Escreva em inglês/);
+});
+
+test('idioma da interface traduz mensagens e prompt sem alterar idioma do currículo', () => {
+    const { context, elements } = editor();
+    vm.runInContext("interfaceLanguage = 'en'", context);
+    elements.languageControl.value = 'pt-BR';
+    elements.cvAtualInput.value = 'CV de teste';
+    elements.jobDescriptionInput.value = 'Vaga de teste';
+    context.gerarPrompt('adaptar');
+    assert.match(elements.promptOutput.value, /Write in Brazilian Portuguese/);
+    assert.match(elements.promptOutput.value, /"competencias"/);
+    elements.jobDescriptionInput.value = '';
+    context.gerarPrompt('adaptar');
+    assert.match(elements.aiOutputText.textContent, /First paste the job description/);
+    assert.equal(elements.languageControl.value, 'pt-BR');
 });
 
 test('feedback aparece após PDF e o convite de apoio exige link HTTPS', () => {
@@ -235,6 +252,7 @@ test('feedback aparece após PDF e o convite de apoio exige link HTTPS', () => {
 
 test('feedback prepara e-mail com texto codificado e não aceita mensagem vazia', () => {
     const { context, clickedLinks } = editor();
+    vm.runInContext("interfaceLanguage = 'en'", context);
     const result = element();
     const message = { value: '  Sugestão & melhoria\nOutra linha?  ' };
     const form = { elements: { mensagem: message }, querySelector: () => result };
@@ -245,12 +263,13 @@ test('feedback prepara e-mail com texto codificado e não aceita mensagem vazia'
     assert.equal(prevented, true);
     assert.equal(email.protocol, 'mailto:');
     assert.equal(email.pathname, 'vg.guilherme@gmail.com');
+    assert.equal(email.searchParams.get('subject'), 'Feedback for CV Editor');
     assert.equal(email.searchParams.get('body'), 'Sugestão & melhoria\r\nOutra linha?');
-    assert.match(result.textContent, /confirma o envio/);
+    assert.match(result.textContent, /confirm sending/);
     message.value = '   ';
     context.enviarFeedback(event);
     assert.equal(clickedLinks.length, 1);
-    assert.match(result.textContent, /Escreve uma mensagem/);
+    assert.match(result.textContent, /Write a message/);
 });
 
 test('backup suporta várias experiências e rejeita uma entrada incompleta', async () => {
@@ -282,6 +301,7 @@ test('inatividade avisa antes de duas horas e apaga CV, prompt e foto após o pr
     elements.respostaInput.value = 'resposta';
     elements.feedbackAfterPdf.value = 'Sugestão temporária';
     elements.feedbackFooter.value = 'Outra sugestão temporária';
+    elements.languageControl.value = 'en';
     elements.cvPhoto.src = 'data:image/png;base64,AAAA';
     elements.includePhoto.checked = true;
     setTime(115 * 60 * 1000);
@@ -294,6 +314,7 @@ test('inatividade avisa antes de duas horas e apaga CV, prompt e foto após o pr
     assert.equal(elements.respostaInput.value, '');
     assert.equal(elements.feedbackAfterPdf.value, '');
     assert.equal(elements.feedbackFooter.value, '');
+    assert.equal(elements.languageControl.value, 'pt-BR');
     assert.equal(elements.cvPhoto.src, undefined);
     assert.equal(elements.includePhoto.checked, false);
     assert.match(elements.controlStatus.textContent, /inatividade/);

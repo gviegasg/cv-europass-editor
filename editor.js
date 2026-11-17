@@ -17,7 +17,6 @@ const FONTS = [
 ];
 const CV_LANGUAGES = {
     'pt-PT': {
-        prompt: 'português europeu',
         photo: 'Fotografia do candidato',
         labels: { address: 'Morada:', email: 'Email:', phone: 'Telemóvel:', summary: 'Resumo Profissional', skills: 'Competências', experience: 'Experiência', education: 'Educação e Estudos' },
         fields: {
@@ -34,7 +33,6 @@ const CV_LANGUAGES = {
         education: ['Curso, instituição e data de conclusão ou situação atual', 'Educação']
     },
     'pt-BR': {
-        prompt: 'português brasileiro',
         photo: 'Foto do candidato',
         labels: { address: 'Endereço:', email: 'E-mail:', phone: 'Telefone:', summary: 'Resumo Profissional', skills: 'Competências', experience: 'Experiência', education: 'Formação Acadêmica' },
         fields: {
@@ -51,7 +49,6 @@ const CV_LANGUAGES = {
         education: ['Curso, instituição e data de conclusão ou situação atual', 'Formação']
     },
     es: {
-        prompt: 'espanhol',
         photo: 'Fotografía del candidato',
         labels: { address: 'Dirección:', email: 'Correo:', phone: 'Teléfono:', summary: 'Perfil Profesional', skills: 'Competencias', experience: 'Experiencia', education: 'Formación Académica' },
         fields: {
@@ -68,7 +65,6 @@ const CV_LANGUAGES = {
         education: ['Estudios, institución y fecha de finalización o situación actual', 'Formación']
     },
     en: {
-        prompt: 'inglês',
         photo: 'Candidate photograph',
         labels: { address: 'Address:', email: 'Email:', phone: 'Phone:', summary: 'Professional Summary', skills: 'Skills', experience: 'Experience', education: 'Education' },
         fields: {
@@ -99,7 +95,7 @@ function checkSession(revision) {
 }
 
 function status(texto) {
-    document.getElementById('controlStatus').textContent = texto;
+    mostrarMensagem(document.getElementById('controlStatus'), texto);
 }
 
 function fields() {
@@ -178,7 +174,7 @@ function removerEntrada(tipo) {
         return;
     }
     const last = list.lastElementChild;
-    if (last.innerText.trim() && !confirm('Remover a última entrada e os seus dados?')) return;
+    if (last.innerText.trim() && !confirm(traduzirMensagem('Remover a última entrada e os seus dados?'))) return;
     last.remove();
     dirty = true;
     verificarPagina();
@@ -431,7 +427,7 @@ async function importarBackup(event) {
         const backup = data.formato === 'cv-editor-legado' && data.versao === 1
             ? await converterLegado(data.html, data.foto) : await validateBackup(data);
         checkSession(revision);
-        if (dirty && !confirm('Importar o backup substituirá o CV atual. Continua?')) return;
+        if (dirty && !confirm(traduzirMensagem('Importar o backup substituirá o CV atual. Continua?'))) return;
         checkSession(revision);
         applyBackup(backup);
         status('Backup importado para esta sessão. Exporta-o novamente para guardar futuras alterações.');
@@ -469,7 +465,7 @@ function exportarLegado() {
 }
 
 function apagarLegado() {
-    if (!confirm('Apagar definitivamente os dados guardados pela versão anterior? Exporta-os primeiro se precisares deles.')) return;
+    if (!confirm(traduzirMensagem('Apagar definitivamente os dados guardados pela versão anterior? Exporta-os primeiro se precisares deles.'))) return;
     try {
         localStorage.removeItem(LEGACY_HTML);
         localStorage.removeItem(LEGACY_PHOTO);
@@ -523,7 +519,7 @@ async function converterLegado(html, foto) {
         try {
             await validarFoto(image);
         } catch (error) {
-            if (!confirm('A fotografia antiga não cumpre os requisitos atuais. Recuperar os textos sem a fotografia? Os dados antigos não serão apagados.')) {
+            if (!confirm(traduzirMensagem('A fotografia antiga não cumpre os requisitos atuais. Recuperar os textos sem a fotografia? Os dados antigos não serão apagados.'))) {
                 throw new Error('Recuperação cancelada. Exporta os dados antigos antes de os apagar.');
             }
             image = null;
@@ -542,7 +538,7 @@ async function recuperarLegado() {
         const old = legacyData();
         const backup = await converterLegado(old.html, old.foto);
         checkSession(revision);
-        if (dirty && !confirm('Recuperar o rascunho substituirá o CV atual. Continua?')) return;
+        if (dirty && !confirm(traduzirMensagem('Recuperar o rascunho substituirá o CV atual. Continua?'))) return;
         checkSession(revision);
         applyBackup(backup);
         status('Rascunho recuperado. Exporta um backup e depois apaga os dados antigos usando o aviso acima.');
@@ -559,7 +555,7 @@ function resetSession() {
     for (const id of ['cvAtualInput', 'jobDescriptionInput', 'promptOutput', 'respostaInput', 'backupUpload', 'cvFileUpload', 'jobFileUpload', 'photoUpload', 'feedbackAfterPdf', 'feedbackFooter']) {
         document.getElementById(id).value = '';
     }
-    document.querySelectorAll('[data-feedback-status]').forEach(node => { node.textContent = ''; });
+    document.querySelectorAll('[data-feedback-status]').forEach(node => { mostrarMensagem(node, ''); });
     document.getElementById('promptBox').classList.add('hidden');
     document.getElementById('aiResultBox').classList.add('hidden');
     document.getElementById('aiPanel').classList.remove('active');
@@ -567,12 +563,12 @@ function resetSession() {
     document.getElementById('editorStatus').hidden = true;
     document.getElementById('donationNotice').classList.add('hidden');
     removerFoto();
-    applySettings({ margem: 10, fonte: FONTS[0], tamanho: 10 });
+    applySettings({ margem: 10, fonte: FONTS[0], tamanho: 10, idioma: 'pt-BR' });
     dirty = false;
 }
 
 function reporOriginal() {
-    if (!confirm('Apagar o CV e os dados desta sessão? Exporta um backup primeiro se precisares deles.')) return;
+    if (!confirm(traduzirMensagem('Apagar o CV e os dados desta sessão? Exporta um backup primeiro se precisares deles.'))) return;
     resetSession();
     status('Dados desta sessão apagados.');
 }
@@ -588,7 +584,7 @@ function scheduleSession() {
         lastActivity = Date.now();
         sessionTimer = setTimeout(scheduleSession, SESSION_LIMIT - SESSION_WARNING);
     } else if (remaining <= SESSION_WARNING) {
-        warning.textContent = 'A sessão será apagada após 2 horas de inatividade. Interage com a página para continuar e exporta um backup.';
+        mostrarMensagem(warning, 'A sessão será apagada após 2 horas de inatividade. Interage com a página para continuar e exporta um backup.');
         warning.classList.remove('hidden');
         sessionTimer = setTimeout(scheduleSession, remaining);
     } else {
@@ -605,14 +601,14 @@ function registrarAtividade() {
 
 async function gerarPDF() {
     const btn = document.getElementById('btnPdf');
-    const original = btn.innerHTML;
+    const original = [...btn.childNodes];
     const sheet = document.getElementById('cv-sheet');
     if (typeof html2pdf !== 'function') {
         status('⚠️ A biblioteca de PDF não está disponível. Usa «Imprimir» para guardar em PDF.');
         return;
     }
     btn.disabled = true;
-    btn.textContent = 'A gerar...';
+    mostrarMensagem(btn, 'A gerar...');
     const fits = !verificarPagina();
     sheet.classList.add('exporting');
     try {
@@ -644,7 +640,8 @@ async function gerarPDF() {
     } finally {
         sheet.classList.remove('exporting');
         btn.disabled = false;
-        btn.innerHTML = original;
+        interfaceMessages.delete(btn);
+        btn.replaceChildren(...original);
     }
 }
 
@@ -672,19 +669,19 @@ function enviarFeedback(event) {
     const message = form.elements.mensagem.value.trim();
     const result = form.querySelector('[data-feedback-status]');
     if (!message || message.length > 1500) {
-        result.textContent = '⚠️ Escreve uma mensagem com até 1500 caracteres.';
+        mostrarMensagem(result, '⚠️ Escreve uma mensagem com até 1500 caracteres.');
         return;
     }
     try {
-        const subject = encodeURIComponent('Sugestão para o CV Editor');
+        const subject = encodeURIComponent(traduzirTexto('Sugestão para o CV Editor'));
         const body = encodeURIComponent(message.replace(/\r?\n/g, '\r\n'));
         const link = document.createElement('a');
         link.href = `mailto:${FEEDBACK_EMAIL}?subject=${subject}&body=${body}`;
         link.click();
-        result.textContent = `Revê e confirma o envio no teu aplicativo de e-mail. Se não abrir, envia a mensagem para ${FEEDBACK_EMAIL}.`;
+        mostrarMensagem(result, `Revê e confirma o envio no teu aplicativo de e-mail. Se não abrir, envia a mensagem para ${FEEDBACK_EMAIL}.`);
     } catch (error) {
         console.error('Não foi possível preparar o e-mail:', error);
-        result.textContent = `⚠️ Não foi possível preparar o e-mail. Envia a mensagem para ${FEEDBACK_EMAIL}.`;
+        mostrarMensagem(result, `⚠️ Não foi possível preparar o e-mail. Envia a mensagem para ${FEEDBACK_EMAIL}.`);
     }
 }
 
@@ -720,7 +717,7 @@ function carregarTextoFicheiro(event, campo, descricao) {
 }
 
 function mostrarResultado(texto) {
-    document.getElementById('aiOutputText').textContent = texto;
+    mostrarMensagem(document.getElementById('aiOutputText'), texto);
     const box = document.getElementById('aiResultBox');
     box.classList.remove('hidden');
     box.scrollIntoView({ block: 'nearest' });
@@ -730,7 +727,7 @@ function gerarPrompt(tipo) {
     const cvColado = document.getElementById('cvAtualInput').value.trim();
     const cvBase = cvColado || document.getElementById('cv-sheet').innerText.trim();
     const vaga = document.getElementById('jobDescriptionInput').value.trim();
-    const idioma = CV_LANGUAGES[document.getElementById('languageControl').value].prompt;
+    const idioma = document.getElementById('languageControl').value;
     if (!cvColado && !Object.values(currentFields()).some(Boolean)) {
         mostrarResultado('⚠️ Preenche o CV no editor ou cola o teu CV atual antes de gerar o prompt.');
         return;
@@ -740,43 +737,11 @@ function gerarPrompt(tipo) {
         return;
     }
 
-    let prompt;
-    if (tipo === 'adaptar') {
-        prompt = `És um consultor de RH sénior. Adapta o meu CV ao anúncio da vaga abaixo, mantendo total veracidade: não inventes experiências nem competências que não constem do meu CV. Escreve em ${idioma}, de forma direta e profissional.
-
-Responde APENAS com um objeto JSON válido, sem comentários, sem texto antes ou depois e sem bloco de código, exatamente neste formato:
-{
-  "cargo": "título profissional alvo",
-  "resumo": "resumo profissional",
-  "competencias": [
-    { "titulo": "título curto", "descricao": "descrição de uma linha" }
-  ]
-}
-A lista "competencias" deve ter exatamente 6 itens.
-
-=== MEU CV ===
-${cvBase}
-
-=== ANÚNCIO DA VAGA ===
-${vaga}`;
-    } else if (tipo === 'entrevista') {
-        prompt = `És um recrutador experiente. Com base no meu CV${vaga ? ' e no anúncio da vaga' : ''} abaixo, prevê as 5 perguntas de entrevista mais prováveis e, para cada uma, sugere uma resposta forte usando apenas factos do meu CV (método STAR quando aplicável). Responde em ${idioma}.
-
-=== MEU CV ===
-${cvBase}${vaga ? `\n\n=== ANÚNCIO DA VAGA ===\n${vaga}` : ''}`;
-    } else if (tipo === 'carta') {
-        prompt = `És um consultor de RH. Escreve uma carta de apresentação persuasiva e concisa (máx. 250 palavras), em ${idioma}, dirigida à vaga abaixo e baseada apenas em factos do meu CV.
-
-=== MEU CV ===
-${cvBase}
-
-=== ANÚNCIO DA VAGA ===
-${vaga}`;
-    } else {
+    if (!['adaptar', 'entrevista', 'carta'].includes(tipo)) {
         mostrarResultado('⚠️ Tipo de prompt desconhecido.');
         return;
     }
-    document.getElementById('promptOutput').value = prompt;
+    document.getElementById('promptOutput').value = criarTextoPrompt(tipo, idioma, cvBase, vaga);
     document.getElementById('promptBox').classList.remove('hidden');
     mostrarResultado('📋 Prompt gerado. Copia-o e envia-o no teu chat de IA.' +
         (tipo === 'adaptar' ? ' Depois cola a resposta JSON no passo 4.' : ' Lê a resposta diretamente no chat.'));
@@ -836,7 +801,7 @@ function aplicarResposta() {
     dirty = true;
     verificarPagina();
     const message = document.getElementById('editorStatus');
-    message.textContent = '✅ Cargo, resumo e competências atualizados nesta sessão. Revê o CV e exporta um backup para o guardar.';
+    mostrarMensagem(message, '✅ Cargo, resumo e competências atualizados nesta sessão. Revê o CV e exporta um backup para o guardar.');
     message.hidden = false;
     const panel = document.getElementById('aiPanel');
     panel.classList.remove('active');
@@ -846,6 +811,8 @@ function aplicarResposta() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    inicializarIdiomaPagina();
+    aplicarIdioma(document.getElementById('languageControl').value);
     for (const id of ['marginControl', 'fontControl', 'fontSizeControl', 'languageControl']) {
         document.getElementById(id).addEventListener('input', atualizarConfiguracao);
     }

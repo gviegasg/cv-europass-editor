@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -103,12 +103,20 @@
 <body class="bg-gray-200 py-4 font-sans text-gray-800 min-h-screen relative flex flex-col items-center">
 
     <header class="no-print w-full max-w-[1100px] px-5 sm:px-8">
-        <nav class="flex items-center justify-between gap-4 py-4" aria-label="Navegação principal">
+        <nav class="flex flex-wrap items-center justify-between gap-4 py-4" aria-label="Navegação principal">
             <a href="#" class="flex items-center gap-2.5 font-bold text-slate-900">
                 <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-[#004494] text-sm font-bold text-white" aria-hidden="true">CV</span>
                 <span>CV Editor</span>
             </a>
-            <div class="flex items-center gap-4 text-sm font-semibold">
+            <div class="flex w-full items-end justify-between gap-2 text-sm font-semibold sm:w-auto sm:items-center sm:justify-end sm:gap-4">
+                <label class="text-xs text-slate-700">Idioma da página
+                    <select id="interfaceLanguage" class="mt-1 block rounded border border-slate-300 bg-white p-2 text-sm">
+                        <option value="pt-BR" selected>Português (Brasil)</option>
+                        <option value="pt-PT">Português (Portugal)</option>
+                        <option value="es">Español</option>
+                        <option value="en">English</option>
+                    </select>
+                </label>
                 <a href="#como-funciona" class="hidden text-slate-600 hover:text-[#004494] sm:inline">Como funciona</a>
                 <a href="#editor" class="rounded-lg border border-[#004494] px-3 py-2 text-[#004494] hover:bg-blue-50">Abrir editor <span aria-hidden="true">↓</span></a>
             </div>
@@ -194,7 +202,7 @@
             <h2 class="mt-1 text-xl font-bold text-slate-900">Editor de currículo</h2>
             <p class="mt-1 text-xs text-gray-600">Clica nos campos da folha para os preencher.</p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
             <button id="btnPdf" onclick="gerarPDF()" class="bg-[#004494] text-white px-4 py-1.5 rounded shadow hover:bg-blue-800 transition flex items-center font-semibold text-xs">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -218,8 +226,8 @@
             <div class="flex flex-wrap items-end gap-4">
                 <label class="text-xs font-semibold text-slate-700">Idioma do CV
                     <select id="languageControl" class="mt-1 block rounded border border-slate-300 p-2 text-sm">
+                        <option value="pt-BR" selected>Português (Brasil)</option>
                         <option value="pt-PT">Português (Portugal)</option>
-                        <option value="pt-BR">Português (Brasil)</option>
                         <option value="es">Español</option>
                         <option value="en">English</option>
                     </select>
@@ -421,6 +429,7 @@
         </button>
     </div>
 
+    <script src="interface.js"></script>
     <script src="editor.js"></script>
 </body>
 </html>
