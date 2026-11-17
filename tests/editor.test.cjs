@@ -213,6 +213,41 @@ test('backups anteriores com modelo mantêm dados e idioma usando o formato úni
     }
 });
 
+test('converte rascunho legado preservando os dados do currículo', async () => {
+    const { context } = editor();
+    const text = textContent => ({ textContent });
+    const job = {
+        querySelector: selector => ({
+            h3: text('Cargo antigo'), span: text('2020'), p: text('Empresa antiga')
+        })[selector],
+        querySelectorAll: () => [text('Resultado')]
+    };
+    const root = {
+        children: [null, null, null, null,
+            { querySelectorAll: () => [job] },
+            { querySelectorAll: () => [text('Curso antigo')] }],
+        querySelector: selector => ({
+            h1: text('Nome antigo'), '#cargoAlvo': text('Objetivo antigo'),
+            '#resumoTexto': text('Resumo antigo')
+        })[selector] || null,
+        querySelectorAll: selector => selector === '#competenciasGrid > p'
+            ? [text('Competência antiga')] : [text('Morada: Cidade')]
+    };
+    let markup;
+    context.document.createElement = tag => {
+        assert.equal(tag, 'template');
+        return { content: root, set innerHTML(value) { markup = value; } };
+    };
+
+    const result = await context.converterLegado('<div>rascunho</div>', null);
+    assert.equal(markup, '<div>rascunho</div>');
+    assert.equal(result.campos.nome, 'Nome antigo');
+    assert.equal(result.campos.morada, 'Cidade');
+    assert.equal(result.campos.experiencia1Detalhes, '• Resultado');
+    assert.equal(result.campos.educacao1, 'Curso antigo');
+    assert.equal(result.fotografia, null);
+});
+
 test('o prompt pede a resposta no idioma selecionado', () => {
     const { context, elements } = editor();
     elements.cvAtualInput.value = 'CV de teste';

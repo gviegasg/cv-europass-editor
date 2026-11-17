@@ -18,7 +18,7 @@ A página começa em português do Brasil e oferece português de Portugal, espa
 
 O editor não grava o CV automaticamente nem o envia para um servidor. O conteúdo é mantido na memória da página e é descartado quando ela é atualizada ou fechada, ou após **duas horas de inatividade**. Ao regressar a uma página suspensa, o prazo de inatividade é verificado. Exporta um backup antes de sair.
 
-O backup e o PDF são ficheiros no dispositivo do utilizador: não são apagados pelo editor e podem conter dados pessoais. Ao copiar o prompt ou enviá-lo a um serviço de IA, os dados incluídos ficam na área de transferência ou são partilhados com esse serviço. As bibliotecas visuais e de PDF são carregadas de CDNs, que podem receber dados de ligação, como o endereço IP.
+O backup e o PDF são ficheiros no dispositivo do utilizador: não são apagados pelo editor e podem conter dados pessoais. Ao copiar o prompt ou enviá-lo a um serviço de IA, os dados incluídos ficam na área de transferência ou são partilhados com esse serviço. A biblioteca de PDF é carregada de um CDN, que pode receber dados de ligação, como o endereço IP; o navegador verifica a integridade da versão utilizada.
 
 Uma versão anterior guardava rascunhos no navegador. Se existirem, o editor mostra opções para os recuperar, exportar ou apagar. Esses dados antigos permanecem no navegador até serem apagados pelo utilizador. A recuperação converte até seis competências e 20 experiências ou formações por secção. Se a fotografia antiga não cumprir os requisitos, podes recuperar apenas o texto; se a estrutura não puder ser convertida, exporta os dados antigos antes de os apagar.
 
@@ -42,3 +42,5 @@ Não há limite de downloads nem pagamento obrigatório. Para ativar o convite o
 ## Testes
 
 Executa `node --test tests/editor.test.cjs` para os testes automatizados. Os fluxos de foto, backup, impressão e sessão devem também ser verificados no navegador.
+
+O CSS gerado está incluído no projeto, pelo que não é necessário instalar dependências para utilizar o editor. Após alterar classes no HTML ou JavaScript, executa `npm ci` e `npm run build:css` para atualizar `styles.css`.

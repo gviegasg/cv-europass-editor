@@ -481,8 +481,10 @@ async function converterLegado(html, foto) {
     if (typeof html !== 'string' || html.length > BACKUP_LIMIT) {
         throw new Error('O rascunho antigo não contém um CV reconhecível.');
     }
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    const root = doc.body;
+    // O conteúdo do template permanece inerte e nunca é inserido na página.
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    const root = template.content;
     const blocks = root.children;
     const summary = root.querySelector('#resumoTexto');
     const skills = root.querySelectorAll('#competenciasGrid > p');
