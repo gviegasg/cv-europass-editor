@@ -339,7 +339,7 @@ async function previewImage(event) {
         document.getElementById('cvPhoto').src = data;
         document.getElementById('includePhoto').checked = true;
         alterarFoto();
-        status('Foto adicionada. Podes desmarcar «Incluir foto» antes de descarregar o PDF.');
+        status('Foto adicionada. Podes desmarcar «Incluir foto» antes de imprimir.');
     } catch (error) {
         if (request === photoRevision) status('⚠️ ' + error.message);
     } finally {
@@ -501,7 +501,6 @@ function resetSession() {
     document.getElementById('aiPanel').classList.add('hidden');
     document.getElementById('editorStatus').hidden = true;
     document.getElementById('donationNotice').classList.add('hidden');
-    mostrarMensagem(document.getElementById('pdfStatus'), '');
     removerFoto();
     applySettings({ margem: 10, fonte: FONTS[0], tamanho: 10, idioma: 'pt-BR' });
     dirty = false;
@@ -541,27 +540,20 @@ function registrarAtividade() {
 
 async function gerarPDF() {
     const btn = document.getElementById('btnPdf');
-    const pdfStatus = document.getElementById('pdfStatus');
     const original = [...btn.childNodes];
     const sheet = document.getElementById('cv-sheet');
     if (typeof html2pdf !== 'function') {
-        mostrarMensagem(pdfStatus, '⚠️ A biblioteca de PDF não está disponível. Verifica a ligação ou usa a impressão do navegador.');
+        status('⚠️ A biblioteca de PDF não está disponível. Usa «Imprimir» para guardar em PDF.');
         return;
     }
-    const link = document.createElement('a');
-    if (!('download' in link) || typeof URL.createObjectURL !== 'function') {
-        mostrarMensagem(pdfStatus, '⚠️ O download direto não está disponível neste navegador. Usa a impressão do navegador.');
-        return;
-    }
-    mostrarMensagem(pdfStatus, '');
     btn.disabled = true;
     mostrarMensagem(btn, 'A gerar...');
-    let url;
+    const fits = !verificarPagina();
+    sheet.classList.add('exporting');
     try {
-        const fits = !verificarPagina();
-        sheet.classList.add('exporting');
         const worker = html2pdf().set({
             margin: 0,
+            filename: 'CV.pdf',
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, logging: false, scrollX: 0, scrollY: 0 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -579,23 +571,12 @@ async function gerarPDF() {
             context.drawImage(canvas, 0, 0);
             await worker.set({ canvas: cropped });
         }
-        url = URL.createObjectURL(await worker.toPdf().outputPdf('blob'));
-        link.href = url;
-        link.download = 'CV.pdf';
-        // Se o navegador abrir uma prévia em vez de baixar, não substitui a aba do editor.
-        link.target = '_blank';
-        link.rel = 'noopener';
-        link.hidden = true;
-        document.body.append(link);
-        link.click();
+        await worker.toPdf().save();
         mostrarApoio();
     } catch (error) {
         console.error('Erro na exportação:', error);
-        mostrarMensagem(pdfStatus, '⚠️ Não foi possível gerar o PDF. Tenta novamente ou usa a impressão do navegador.');
+        status('⚠️ Não foi possível gerar o PDF. Tenta «Imprimir».');
     } finally {
-        link.remove();
-        // Dá tempo ao navegador para iniciar a leitura do arquivo.
-        if (url) setTimeout(() => URL.revokeObjectURL(url), 60_000);
         sheet.classList.remove('exporting');
         btn.disabled = false;
         interfaceMessages.delete(btn);

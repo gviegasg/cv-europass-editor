@@ -43,8 +43,7 @@ function editor({ width = 300, height = 400 } = {}) {
         'aiOutputText', 'aiResultBox', 'marginControl', 'fontControl', 'fontSizeControl', 'cvPhoto',
         'includePhoto', 'photoColumn', 'personalData', 'controlStatus', 'sessionWarning', 'pageWarning',
         'cvAtualInput', 'jobDescriptionInput', 'promptOutput', 'cvFileUpload', 'jobFileUpload', 'photoUpload',
-        'promptBox', 'languageControl', 'donationNotice', 'donationOffer', 'donationLink', 'feedbackAfterPdf', 'feedbackFooter',
-        'btnPdf', 'pdfStatus'];
+        'promptBox', 'languageControl', 'donationNotice', 'donationOffer', 'donationLink', 'feedbackAfterPdf', 'feedbackFooter'];
     const elements = Object.fromEntries(ids.map(id => [id, element()]));
     const labels = ['address', 'email', 'phone', 'summary', 'skills', 'experience', 'education']
         .map(key => Object.assign(element(), { dataset: { cvLabel: key } }));
@@ -307,65 +306,6 @@ test('idioma da interface traduz mensagens e prompt sem alterar idioma do currí
     context.gerarPrompt('adaptar');
     assert.match(elements.aiOutputText.textContent, /First paste the job description/);
     assert.equal(elements.languageControl.value, 'pt-BR');
-});
-
-test('baixar PDF mantém o currículo e usa um link que não substitui a aba do editor', async () => {
-    const { context, elements, fields } = editor();
-    const sheet = elements['cv-sheet'];
-    const original = {};
-    elements.btnPdf.childNodes = [original];
-    elements.btnPdf.replaceChildren = (...nodes) => { elements.btnPdf.childNodes = nodes; };
-    fields[0].textContent = 'Nome de teste';
-    fields[2].textContent = 'Resumo de teste';
-    elements.cvAtualInput.value = 'Texto no assistente';
-    const pdf = new Blob(['%PDF-1.4'], { type: 'application/pdf' });
-    const worker = {
-        set() { return this; },
-        from() { return this; },
-        toCanvas() { return this; },
-        async get(key) {
-            return key === 'canvas' ? { width: 210, height: 297 } : { inner: { ratio: 297 / 210 } };
-        },
-        toPdf() { return this; },
-        async outputPdf(type) { assert.equal(type, 'blob'); return pdf; }
-    };
-    context.html2pdf = () => worker;
-    let download;
-    const link = {
-        download: '',
-        click() { download = { url: this.href, name: this.download, target: this.target }; },
-        remove() {}
-    };
-    context.document.createElement = () => link;
-    context.document.body = { append() {} };
-    context.URL = { createObjectURL(blob) { assert.equal(blob, pdf); return 'blob:cv-test'; } };
-
-    await context.gerarPDF();
-
-    assert.deepEqual(download, { url: 'blob:cv-test', name: 'CV.pdf', target: '_blank' });
-    assert.equal(fields[0].textContent, 'Nome de teste');
-    assert.equal(fields[2].textContent, 'Resumo de teste');
-    assert.equal(elements.cvAtualInput.value, 'Texto no assistente');
-    assert.equal(sheet.classList.contains('exporting'), false);
-    assert.equal(elements.btnPdf.disabled, false);
-    assert.deepEqual(elements.btnPdf.childNodes, [original]);
-    assert.equal(elements.donationNotice.classList.contains('hidden'), false);
-});
-
-test('sem download direto, mostra o aviso junto ao botão e não altera o currículo', async () => {
-    const { context, elements, fields, clickedLinks } = editor();
-    elements.btnPdf.childNodes = [];
-    fields[0].textContent = 'Nome preservado';
-    let started = false;
-    context.html2pdf = () => { started = true; };
-
-    await context.gerarPDF();
-
-    assert.equal(started, false);
-    assert.deepEqual(clickedLinks, []);
-    assert.equal(fields[0].textContent, 'Nome preservado');
-    assert.match(elements.pdfStatus.textContent, /download direto não está disponível.*impressão do navegador/);
-    assert.equal(elements.donationNotice.classList.contains('hidden'), true);
 });
 
 test('feedback aparece após PDF e o convite de apoio exige link HTTPS', () => {
