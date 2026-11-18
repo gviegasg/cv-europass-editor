@@ -139,6 +139,34 @@ Este diário reúne os onze commits da branch `main` desde o primeiro até `10eb
 
 - Foi retirada a expressão sobre não garantir a seleção do texto inicial, nos quatro idiomas da página.
 
+## 18 de novembro de 2026
+
+### Edição preservada ao baixar PDF
+
+- O PDF passou a ser baixado sem navegar para fora da aba do editor. O currículo continua editável na mesma sessão, sem armazenamento automático. Quando o download direto não está disponível, o editor orienta a usar **Imprimir**.
+- Os 26 testes automatizados passaram. No Chrome com tela móvel emulada, o download gerou um PDF A4 de uma página e deixou a aba, os campos e a margem intactos; foi possível editar o currículo novamente.
+
+### Botões do editor reorganizados
+
+- **Baixar PDF** ficou fixo no canto superior direito. **Limpar currículo** passou para abaixo da folha e manteve a confirmação antes de apagar dados.
+- O botão **Imprimir** foi removido e os textos de orientação nos quatro idiomas passaram a indicar o download como ação principal. A opção nativa de impressão do navegador continua disponível.
+- No Chromium, foram verificados o botão fixo em telas de celular, tablet e desktop, a confirmação de limpeza e a geração de um PDF A4 sem apagar o currículo. Os 26 testes automatizados passaram.
+- A reversão `00ff3bb` desfez essas mudanças e a correção do download. Ambas foram reaplicadas a pedido do usuário, sem reescrever o histórico.
+
+### Novo contato e janela de feedback
+
+- O e-mail de contato foi atualizado nos dois formulários. Após o download do PDF, as sugestões e reclamações passaram a ficar em uma janela opcional, separada dos ajustes de fonte. O formulário do rodapé e o convite de apoio, quando configurado, foram mantidos.
+- No Chromium, a janela foi verificada em tela pequena, nas orientações retrato e paisagem. Fechar preservou o currículo, e os dois formulários prepararam mensagens para o novo endereço sem enviá-las. Os 27 testes automatizados passaram.
+
+### Popup de feedback simplificado
+
+- O popup de sugestões e reclamações ficou compacto, sem escurecer a página. O conteúdo inicial inclui apenas o título, a caixa de texto e os botões para fechar e preparar o e-mail. As orientações e o convite de apoio ficaram no rodapé.
+
+### Texto do editor no assistente de carreira
+
+- O botão **Usar texto do editor** copia os campos preenchidos do resumo à formação para o assistente, sem os dados do cabeçalho. O mesmo recorte é usado quando o campo do currículo no assistente fica vazio. Nenhum dado é enviado à IA automaticamente.
+- No Chromium com tela de celular emulada, a cópia e o prompt incluíram experiências e formações adicionadas sem incluir o cabeçalho. Os 30 testes automatizados passaram.
+
 ## Situação e decisões registradas
 
 - O editor atual é uma aplicação estática no navegador, sem API de IA, conta, backend próprio ou armazenamento automático do currículo.

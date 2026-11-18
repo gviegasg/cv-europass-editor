@@ -42,9 +42,15 @@ function editor({ width = 300, height = 400 } = {}) {
     const ids = ['respostaInput', 'cargoAlvo', 'resumoTexto', 'cv-sheet', 'editorStatus', 'aiPanel',
         'aiOutputText', 'aiResultBox', 'marginControl', 'fontControl', 'fontSizeControl', 'cvPhoto',
         'includePhoto', 'photoColumn', 'personalData', 'controlStatus', 'sessionWarning', 'pageWarning',
-        'cvAtualInput', 'jobDescriptionInput', 'promptOutput', 'cvFileUpload', 'jobFileUpload', 'photoUpload',
-        'promptBox', 'languageControl', 'donationNotice', 'donationOffer', 'donationLink', 'feedbackAfterPdf', 'feedbackFooter'];
+        'cvAtualInput', 'cvImportStatus', 'jobDescriptionInput', 'promptOutput', 'cvFileUpload', 'jobFileUpload', 'photoUpload',
+        'promptBox', 'languageControl', 'feedbackDialog', 'donationOffer', 'donationLink', 'feedbackAfterPdf', 'feedbackFooter',
+        'btnPdf', 'pdfStatus'];
     const elements = Object.fromEntries(ids.map(id => [id, element()]));
+    Object.assign(elements.feedbackDialog, {
+        open: false,
+        showModal() { this.open = true; },
+        close() { this.open = false; }
+    });
     const labels = ['address', 'email', 'phone', 'summary', 'skills', 'experience', 'education']
         .map(key => Object.assign(element(), { dataset: { cvLabel: key } }));
     elements['cv-sheet'].querySelectorAll = () => labels;
@@ -284,6 +290,82 @@ test('converte rascunho legado preservando os dados do currículo', async () => 
     assert.equal(result.fotografia, null);
 });
 
+test('copia somente as seções profissionais preenchidas e usa o mesmo texto no prompt', () => {
+    const { context, elements, fields } = editor();
+    const additional = ['experiencia4Detalhes', 'educacao4']
+        .map(field => Object.assign(element(), { dataset: { field } }));
+    fields.push(...additional);
+    const content = {
+        nome: 'Nome privado', cargo: 'Cargo do cabeçalho', email: 'privado@example.test',
+        morada: 'Endereço privado', telefone: 'Telefone privado',
+        resumo: 'Resumo de teste', competencia3: 'Gestão de projetos',
+        experiencia1Cargo: 'Analista', experiencia1Data: '2021–2023', experiencia1Empresa: 'Empresa de teste',
+        experiencia1Detalhes: 'Primeiro resultado\nSegundo resultado', experiencia4Detalhes: 'Resultado mais recente',
+        educacao2: 'Formação técnica', educacao4: 'Curso de teste'
+    };
+    for (const field of fields) field.textContent = content[field.dataset.field] || '';
+    elements.jobDescriptionInput.value = 'Vaga de teste';
+    elements.languageControl.value = 'en';
+    const professional = [
+        'Professional Summary\nResumo de teste',
+        'Skills\nGestão de projetos',
+        'Experience\nAnalista\n2021–2023\nEmpresa de teste\nPrimeiro resultado\nSegundo resultado\n\nResultado mais recente',
+        'Education\nFormação técnica\nCurso de teste'
+    ].join('\n\n');
+
+    context.gerarPrompt('adaptar');
+    const originalPrompt = elements.promptOutput.value;
+    assert.ok(originalPrompt.includes(`\n${professional}\n\n`));
+    for (const key of ['nome', 'cargo', 'email', 'morada', 'telefone']) {
+        assert.ok(!originalPrompt.includes(content[key]));
+    }
+
+    context.usarTextoDoEditor();
+    assert.equal(elements.cvAtualInput.value, professional);
+    assert.equal(elements.promptOutput.value, '');
+    assert.equal(elements.promptBox.classList.contains('hidden'), true);
+    assert.match(elements.cvImportStatus.textContent, /Texto do editor copiado/);
+    context.gerarPrompt('adaptar');
+    assert.equal(elements.promptOutput.value, originalPrompt);
+    assert.equal(elements.jobDescriptionInput.value, 'Vaga de teste');
+});
+
+test('não substitui o texto no assistente se o editor estiver vazio ou o usuário cancelar', () => {
+    const { context, elements, fields } = editor();
+    fields[0].textContent = 'Somente o nome';
+    elements.jobDescriptionInput.value = 'Vaga de teste';
+    context.gerarPrompt('adaptar');
+    assert.equal(elements.promptOutput.value, '');
+    assert.match(elements.aiOutputText.textContent, /Preencha as seções profissionais/);
+
+    elements.cvAtualInput.value = 'Texto importado de um arquivo';
+    context.usarTextoDoEditor();
+    assert.equal(elements.cvAtualInput.value, 'Texto importado de um arquivo');
+    assert.match(elements.cvImportStatus.textContent, /Não há texto nas seções profissionais/);
+
+    elements.resumoTexto.textContent = 'Resumo preenchido';
+    context.confirm = () => false;
+    context.usarTextoDoEditor();
+    assert.equal(elements.cvAtualInput.value, 'Texto importado de um arquivo');
+    context.confirm = () => true;
+    context.usarTextoDoEditor();
+    assert.equal(elements.cvAtualInput.value, 'Resumo Profissional\nResumo preenchido');
+});
+
+test('copiar o texto do editor invalida uma leitura de arquivo anterior', async () => {
+    const { context, elements } = editor();
+    elements.resumoTexto.textContent = 'Resumo do editor';
+    let finish;
+    const text = new Promise(resolve => { finish = resolve; });
+    const file = { name: 'curriculo.txt', size: 12, text: () => text };
+    const pending = context.carregarTextoFicheiro({ target: { files: [file] } }, 'cvAtualInput', 'CV');
+    context.usarTextoDoEditor();
+    finish('Texto do arquivo anterior');
+    await pending;
+
+    assert.equal(elements.cvAtualInput.value, 'Resumo Profissional\nResumo do editor');
+});
+
 test('o prompt pede a resposta no idioma selecionado', () => {
     const { context, elements } = editor();
     elements.cvAtualInput.value = 'CV de teste';
@@ -308,10 +390,72 @@ test('idioma da interface traduz mensagens e prompt sem alterar idioma do currí
     assert.equal(elements.languageControl.value, 'pt-BR');
 });
 
+test('baixar PDF mantém o currículo e usa um link que não substitui a aba do editor', async () => {
+    const { context, elements, fields } = editor();
+    const sheet = elements['cv-sheet'];
+    const original = {};
+    elements.btnPdf.childNodes = [original];
+    elements.btnPdf.replaceChildren = (...nodes) => { elements.btnPdf.childNodes = nodes; };
+    fields[0].textContent = 'Nome de teste';
+    fields[2].textContent = 'Resumo de teste';
+    elements.cvAtualInput.value = 'Texto no assistente';
+    const pdf = new Blob(['%PDF-1.4'], { type: 'application/pdf' });
+    const worker = {
+        set() { return this; },
+        from() { return this; },
+        toCanvas() { return this; },
+        async get(key) {
+            return key === 'canvas' ? { width: 210, height: 297 } : { inner: { ratio: 297 / 210 } };
+        },
+        toPdf() { return this; },
+        async outputPdf(type) { assert.equal(type, 'blob'); return pdf; }
+    };
+    context.html2pdf = () => worker;
+    let download;
+    const link = {
+        download: '',
+        click() {
+            assert.equal(elements.feedbackDialog.open, false);
+            download = { url: this.href, name: this.download, target: this.target };
+        },
+        remove() {}
+    };
+    context.document.createElement = () => link;
+    context.document.body = { append() {} };
+    context.URL = { createObjectURL(blob) { assert.equal(blob, pdf); return 'blob:cv-test'; } };
+
+    await context.gerarPDF();
+
+    assert.deepEqual(download, { url: 'blob:cv-test', name: 'CV.pdf', target: '_blank' });
+    assert.equal(fields[0].textContent, 'Nome de teste');
+    assert.equal(fields[2].textContent, 'Resumo de teste');
+    assert.equal(elements.cvAtualInput.value, 'Texto no assistente');
+    assert.equal(sheet.classList.contains('exporting'), false);
+    assert.equal(elements.btnPdf.disabled, false);
+    assert.deepEqual(elements.btnPdf.childNodes, [original]);
+    assert.equal(elements.feedbackDialog.open, true);
+});
+
+test('sem download direto, mostra o aviso junto ao botão e não altera o currículo', async () => {
+    const { context, elements, fields, clickedLinks } = editor();
+    elements.btnPdf.childNodes = [];
+    fields[0].textContent = 'Nome preservado';
+    let started = false;
+    context.html2pdf = () => { started = true; };
+
+    await context.gerarPDF();
+
+    assert.equal(started, false);
+    assert.deepEqual(clickedLinks, []);
+    assert.equal(fields[0].textContent, 'Nome preservado');
+    assert.match(elements.pdfStatus.textContent, /download direto não está disponível.*impressão do navegador/);
+    assert.equal(elements.feedbackDialog.open, false);
+});
+
 test('feedback aparece após PDF e o convite de apoio exige link HTTPS', () => {
     const { context, elements } = editor();
     context.mostrarApoio();
-    assert.equal(elements.donationNotice.classList.contains('hidden'), false);
+    assert.equal(elements.feedbackDialog.open, true);
     assert.equal(elements.donationOffer.classList.contains('hidden'), true);
     context.mostrarApoio('http://example.test/doar');
     assert.equal(elements.donationOffer.classList.contains('hidden'), true);
@@ -319,6 +463,16 @@ test('feedback aparece após PDF e o convite de apoio exige link HTTPS', () => {
     context.mostrarApoio('https://example.test/doar');
     assert.equal(elements.donationOffer.classList.contains('hidden'), false);
     assert.equal(elements.donationLink.href, 'https://example.test/doar');
+});
+
+test('em navegador sem suporte à janela, indica o formulário de feedback no rodapé', () => {
+    const { context, elements } = editor();
+    delete elements.feedbackDialog.showModal;
+
+    context.mostrarApoio();
+
+    assert.equal(elements.feedbackDialog.open, false);
+    assert.match(elements.pdfStatus.textContent, /formulário de feedback.*final da página/);
 });
 
 test('feedback prepara e-mail com texto codificado e não aceita mensagem vazia', () => {
@@ -333,10 +487,11 @@ test('feedback prepara e-mail com texto codificado e não aceita mensagem vazia'
     const email = new URL(clickedLinks[0]);
     assert.equal(prevented, true);
     assert.equal(email.protocol, 'mailto:');
-    assert.equal(email.pathname, 'goal-splendid50@bravealias.com');
+    assert.equal(email.pathname, 'cveditorweb@gmail.com');
     assert.equal(email.searchParams.get('subject'), 'Feedback for CV Editor');
     assert.equal(email.searchParams.get('body'), 'Sugestão & melhoria\r\nOutra linha?');
     assert.match(result.textContent, /confirm sending/);
+    assert.match(result.textContent, /cveditorweb@gmail\.com/);
     message.value = '   ';
     context.enviarFeedback(event);
     assert.equal(clickedLinks.length, 1);
@@ -371,6 +526,7 @@ test('inatividade avisa antes de duas horas e apaga CV, prompt e foto após o pr
     fields[0].textContent = 'Dados temporários';
     elements.respostaInput.value = 'resposta';
     elements.feedbackAfterPdf.value = 'Sugestão temporária';
+    context.mostrarApoio('https://example.test/doar');
     elements.feedbackFooter.value = 'Outra sugestão temporária';
     elements.languageControl.value = 'en';
     elements.cvPhoto.src = 'data:image/png;base64,AAAA';
@@ -384,6 +540,8 @@ test('inatividade avisa antes de duas horas e apaga CV, prompt e foto após o pr
     assert.equal(fields[0].textContent, '');
     assert.equal(elements.respostaInput.value, '');
     assert.equal(elements.feedbackAfterPdf.value, '');
+    assert.equal(elements.feedbackDialog.open, false);
+    assert.equal(elements.donationOffer.classList.contains('hidden'), true);
     assert.equal(elements.feedbackFooter.value, '');
     assert.equal(elements.languageControl.value, 'pt-BR');
     assert.equal(elements.cvPhoto.src, undefined);

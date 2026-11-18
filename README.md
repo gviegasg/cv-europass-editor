@@ -10,9 +10,10 @@ Uma escrita clara e experiências relevantes para a vaga podem ajudar a chamar a
 Acede à versão online ou abre `index.html` num navegador moderno. A página inicial explica o processo e o editor está logo abaixo. Os textos em cinzento nos campos são orientações: não fazem parte do CV impresso. Podes preparar e guardar o texto num bloco de notas ou rascunho de e-mail antes de preencher o editor, pois este não guarda os dados automaticamente. Em telas pequenas, a edição é adaptada ao ecrã; o PDF e a impressão mantêm o formato A4. A orientação horizontal pode facilitar o preenchimento.
 
 1. Preenche os campos do currículo. O editor começa com seis competências, três experiências e três formações; os controlos permitem adicionar ou remover experiências e formações (até 20 por secção).
-2. Opcionalmente, escolhe uma fotografia JPEG ou PNG de **pelo menos 300 × 400 pixels**, com **até 5 MB**. A imagem é recortada verticalmente. Podes desmarcar **Incluir foto no CV** antes de imprimir.
+2. Opcionalmente, escolhe uma fotografia JPEG ou PNG de **pelo menos 300 × 400 pixels**, com **até 5 MB**. A imagem é recortada verticalmente. Podes desmarcar **Incluir foto no CV** antes de descarregar o PDF.
 3. Ajusta a margem, a fonte e o tamanho diretamente nos controlos do editor. Se o conteúdo exceder uma página A4, surge um aviso; revê também a pré-visualização do navegador.
-4. Para gerar PDF, usa **Imprimir** e escolhe A4, margens nenhumas, escala 100% e sem cabeçalhos ou rodapés. Também podes usar **Descarregar PDF**, que gera o documento a partir de uma imagem e depende da biblioteca carregada pela internet. Para texto selecionável, prefere a impressão do navegador e verifica o PDF gerado. O PDF não pode ser usado para retomar a edição no editor.
+4. Usa **Descarregar PDF** (no canto superior direito) para gerar o documento A4. O botão fica acessível enquanto percorres a página e o currículo continua editável na mesma aba após o download. O PDF é gerado a partir de uma imagem e depende da biblioteca carregada pela internet. Se precisares de um PDF com texto selecionável, usa a opção de impressão do próprio navegador. O PDF não pode ser usado para retomar a edição depois de terminar a sessão.
+5. Se precisares de recomeçar, usa **Limpar CV**, abaixo da folha. O editor só apaga os dados da sessão após a tua confirmação.
 
 A página começa em português do Brasil e oferece português de Portugal, espanhol e inglês no seletor do cabeçalho. O idioma da página e o do CV são independentes; ambos começam em português do Brasil numa sessão nova. O idioma do CV altera os títulos e as orientações, mas **não traduz o texto escrito**. Escreve ou revê os teus dados no idioma escolhido.
 
@@ -28,7 +29,7 @@ Uma versão anterior guardava rascunhos no navegador. Se existirem, o editor mos
 
 O painel ✨ gera prompts sem chave API:
 
-1. Preenche o CV no editor ou cola/carrega o texto do CV atual (`.txt` ou `.docx`, até 5 MB).
+1. Em **O teu CV atual**, clica em **Usar texto do editor** para rever uma cópia do resumo profissional, competências, experiência e formação antes de gerar o prompt. Só são incluídos os campos preenchidos dessas secções, sem nome, cargo do cabeçalho, contactos ou fotografia. Se deixares o campo vazio, o prompt usa as mesmas secções. Também podes colar ou carregar o texto do CV atual (`.txt` ou `.docx`, até 5 MB).
 2. Cola ou carrega o anúncio da vaga (`.txt` ou `.docx`, até 5 MB) e gera um prompt de adaptação, entrevista ou carta. Os ficheiros são lidos no navegador e o texto aparece no assistente; não preenchem automaticamente os campos do currículo.
 3. Copia o prompt para o chat de IA escolhido. Para adaptação, cola a resposta JSON no painel e aplica-a.
 4. Revê os resultados: apenas o cargo, o resumo e as seis competências são substituídos. Nome, contactos, experiência, formação e fotografia mantêm-se.
@@ -37,9 +38,9 @@ A resposta de adaptação precisa de `cargo`, `resumo` e exatamente seis `compet
 
 ## Feedback e contribuições voluntárias
 
-O feedback pode ser escrito no fim da página ou após **Descarregar PDF**. O botão prepara uma mensagem no aplicativo de e-mail do utilizador, que deve revê-la e confirmar o envio; é necessário ter um aplicativo de e-mail configurado. Se não abrir, o endereço de destino é mostrado junto ao campo. Não incluas dados pessoais ou o CV na mensagem. O editor não envia nem guarda o feedback automaticamente.
+Após **Descarregar PDF**, abre-se uma janela compacta com uma caixa de texto para sugestões e reclamações. Fecha-a para continuar a editar o mesmo CV. O formulário também está disponível no fim da página. **Preparar e-mail** abre uma mensagem para `cveditorweb@gmail.com` no aplicativo de e-mail do utilizador, que deve revê-la e confirmar o envio. Se o aplicativo não abrir, podes usar o endereço mostrado no rodapé. Não incluas dados pessoais ou o CV na mensagem. O editor não envia nem guarda o feedback automaticamente.
 
-Não há limite de downloads nem pagamento obrigatório. Para ativar o convite opcional de apoio após **Descarregar PDF**, define `DONATION_URL` em `editor.js` com um link público HTTPS de uma página de doação. Enquanto estiver vazio, só aparece o campo de feedback. O link abre o serviço escolhido noutro separador; consulta as condições e a política de privacidade desse serviço antes de o configurar.
+Não há limite de downloads nem pagamento obrigatório. Para ativar o convite opcional de apoio no rodapé após o download, define `DONATION_URL` em `editor.js` com um link público HTTPS de uma página de doação. Enquanto estiver vazio, o convite não aparece. O link abre o serviço escolhido noutro separador; consulta as condições e a política de privacidade desse serviço antes de o configurar.
 
 ## Testes
 

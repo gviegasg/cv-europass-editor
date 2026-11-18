@@ -7,7 +7,7 @@ const LEGACY_HTML = 'cv_editor_html';
 const LEGACY_PHOTO = 'cv_editor_foto';
 const MAX_ENTRIES = 20;
 const DONATION_URL = '';
-const FEEDBACK_EMAIL = 'goal-splendid50@bravealias.com';
+const FEEDBACK_EMAIL = 'cveditorweb@gmail.com';
 const BASE_FIELDS = ['nome', 'cargo', 'morada', 'email', 'telefone', 'resumo',
     ...Array.from({ length: 6 }, (_, index) => `competencia${index + 1}`)];
 const FONTS = [
@@ -106,6 +106,27 @@ function fields() {
 
 function currentFields() {
     return Object.fromEntries(fields().map(field => [field.dataset.field, field.innerText.trim()]));
+}
+
+function textoProfissionalDoEditor(idioma) {
+    const data = currentFields();
+    const filled = Object.entries(data).filter(([, value]) => value);
+    const collect = pattern => filled.filter(([key]) => pattern.test(key)).map(([, value]) => value).join('\n');
+    const experiences = new Map();
+    for (const [key, value] of filled) {
+        const match = key.match(/^experiencia(\d+)(?:Cargo|Data|Empresa|Detalhes)$/);
+        if (!match) continue;
+        const number = match[1];
+        if (!experiences.has(number)) experiences.set(number, []);
+        experiences.get(number).push(value);
+    }
+    const labels = CV_LANGUAGES[idioma].labels;
+    return [
+        [labels.summary, data.resumo],
+        [labels.skills, collect(/^competencia\d+$/)],
+        [labels.experience, [...experiences.values()].map(lines => lines.join('\n')).join('\n\n')],
+        [labels.education, collect(/^educacao\d+$/)]
+    ].filter(([, text]) => text).map(([label, text]) => `${label}\n${text}`).join('\n\n');
 }
 
 function fieldKeys(experiences, education) {
@@ -339,7 +360,7 @@ async function previewImage(event) {
         document.getElementById('cvPhoto').src = data;
         document.getElementById('includePhoto').checked = true;
         alterarFoto();
-        status('Foto adicionada. Podes desmarcar «Incluir foto» antes de imprimir.');
+        status('Foto adicionada. Podes desmarcar «Incluir foto» antes de descarregar o PDF.');
     } catch (error) {
         if (request === photoRevision) status('⚠️ ' + error.message);
     } finally {
@@ -494,13 +515,17 @@ function resetSession() {
     for (const id of ['cvAtualInput', 'jobDescriptionInput', 'promptOutput', 'respostaInput', 'cvFileUpload', 'jobFileUpload', 'photoUpload', 'feedbackAfterPdf', 'feedbackFooter']) {
         document.getElementById(id).value = '';
     }
+    mostrarMensagem(document.getElementById('cvImportStatus'), '');
     document.querySelectorAll('[data-feedback-status]').forEach(node => { mostrarMensagem(node, ''); });
     document.getElementById('promptBox').classList.add('hidden');
     document.getElementById('aiResultBox').classList.add('hidden');
     document.getElementById('aiPanel').classList.remove('active');
     document.getElementById('aiPanel').classList.add('hidden');
     document.getElementById('editorStatus').hidden = true;
-    document.getElementById('donationNotice').classList.add('hidden');
+    const feedbackDialog = document.getElementById('feedbackDialog');
+    if (feedbackDialog.open) feedbackDialog.close();
+    document.getElementById('donationOffer').classList.add('hidden');
+    mostrarMensagem(document.getElementById('pdfStatus'), '');
     removerFoto();
     applySettings({ margem: 10, fonte: FONTS[0], tamanho: 10, idioma: 'pt-BR' });
     dirty = false;
@@ -540,20 +565,27 @@ function registrarAtividade() {
 
 async function gerarPDF() {
     const btn = document.getElementById('btnPdf');
+    const pdfStatus = document.getElementById('pdfStatus');
     const original = [...btn.childNodes];
     const sheet = document.getElementById('cv-sheet');
     if (typeof html2pdf !== 'function') {
-        status('⚠️ A biblioteca de PDF não está disponível. Usa «Imprimir» para guardar em PDF.');
+        mostrarMensagem(pdfStatus, '⚠️ A biblioteca de PDF não está disponível. Verifica a ligação ou usa a impressão do navegador.');
         return;
     }
+    const link = document.createElement('a');
+    if (!('download' in link) || typeof URL.createObjectURL !== 'function') {
+        mostrarMensagem(pdfStatus, '⚠️ O download direto não está disponível neste navegador. Usa a impressão do navegador.');
+        return;
+    }
+    mostrarMensagem(pdfStatus, '');
     btn.disabled = true;
     mostrarMensagem(btn, 'A gerar...');
-    const fits = !verificarPagina();
-    sheet.classList.add('exporting');
+    let url;
     try {
+        const fits = !verificarPagina();
+        sheet.classList.add('exporting');
         const worker = html2pdf().set({
             margin: 0,
-            filename: 'CV.pdf',
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, logging: false, scrollX: 0, scrollY: 0 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -571,21 +603,39 @@ async function gerarPDF() {
             context.drawImage(canvas, 0, 0);
             await worker.set({ canvas: cropped });
         }
-        await worker.toPdf().save();
-        mostrarApoio();
+        url = URL.createObjectURL(await worker.toPdf().outputPdf('blob'));
+        link.href = url;
+        link.download = 'CV.pdf';
+        // Se o navegador abrir uma prévia em vez de baixar, não substitui a aba do editor.
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.hidden = true;
+        document.body.append(link);
+        link.click();
     } catch (error) {
         console.error('Erro na exportação:', error);
-        status('⚠️ Não foi possível gerar o PDF. Tenta «Imprimir».');
+        mostrarMensagem(pdfStatus, '⚠️ Não foi possível gerar o PDF. Tenta novamente ou usa a impressão do navegador.');
+        return;
     } finally {
+        link.remove();
+        // Dá tempo ao navegador para iniciar a leitura do arquivo.
+        if (url) setTimeout(() => URL.revokeObjectURL(url), 60_000);
         sheet.classList.remove('exporting');
         btn.disabled = false;
         interfaceMessages.delete(btn);
         btn.replaceChildren(...original);
     }
+    mostrarApoio();
 }
 
 function mostrarApoio(link = DONATION_URL) {
-    document.getElementById('donationNotice').classList.remove('hidden');
+    const dialog = document.getElementById('feedbackDialog');
+    if (typeof dialog.showModal !== 'function') {
+        mostrarMensagem(document.getElementById('pdfStatus'), 'O formulário de opinião está disponível no final da página.');
+    } else if (!dialog.open) {
+        document.getElementById('btnPdf').focus({ preventScroll: true });
+        dialog.showModal();
+    }
     const offer = document.getElementById('donationOffer');
     offer.classList.add('hidden');
     if (!link) return;
@@ -635,6 +685,25 @@ function toggleAiPanel() {
     }
 }
 
+function usarTextoDoEditor() {
+    const target = document.getElementById('cvAtualInput');
+    const message = document.getElementById('cvImportStatus');
+    const text = textoProfissionalDoEditor(document.getElementById('languageControl').value);
+    if (!text) {
+        mostrarMensagem(message, '⚠️ Não há texto nas secções profissionais do currículo.');
+        return;
+    }
+    const previous = target.value.trim();
+    if (previous && previous !== text && !confirm(traduzirMensagem('Substituir o texto atual do assistente pelo texto do editor?'))) return;
+    textFileRevisions.cvAtualInput = (textFileRevisions.cvAtualInput || 0) + 1;
+    target.value = text;
+    document.getElementById('promptOutput').value = '';
+    document.getElementById('promptBox').classList.add('hidden');
+    document.getElementById('aiResultBox').classList.add('hidden');
+    dirty = true;
+    mostrarMensagem(message, 'Texto do editor copiado. Revê o conteúdo antes de gerar o prompt.');
+}
+
 async function carregarTextoFicheiro(event, campo, descricao) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -658,6 +727,7 @@ async function carregarTextoFicheiro(event, campo, descricao) {
         if (target.value !== original) throw new Error('O texto mudou durante a leitura. Escolhe novamente o ficheiro.');
         if (!text.trim()) throw new Error('O ficheiro não contém texto legível.');
         target.value = text;
+        if (campo === 'cvAtualInput') mostrarMensagem(document.getElementById('cvImportStatus'), '');
         dirty = true;
     } catch (error) {
         if (uploadRevision !== textFileRevisions[campo]) return;
@@ -682,12 +752,12 @@ function mostrarResultado(texto) {
 }
 
 function gerarPrompt(tipo) {
-    const cvColado = document.getElementById('cvAtualInput').value.trim();
-    const cvBase = cvColado || document.getElementById('cv-sheet').innerText.trim();
-    const vaga = document.getElementById('jobDescriptionInput').value.trim();
     const idioma = document.getElementById('languageControl').value;
-    if (!cvColado && !Object.values(currentFields()).some(Boolean)) {
-        mostrarResultado('⚠️ Preenche o CV no editor ou cola o teu CV atual antes de gerar o prompt.');
+    const cvColado = document.getElementById('cvAtualInput').value.trim();
+    const cvBase = cvColado || textoProfissionalDoEditor(idioma);
+    const vaga = document.getElementById('jobDescriptionInput').value.trim();
+    if (!cvBase) {
+        mostrarResultado('⚠️ Preenche as secções profissionais no editor ou cola o teu CV atual antes de gerar o prompt.');
         return;
     }
     if (tipo !== 'entrevista' && !vaga) {
@@ -783,8 +853,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (field && !field.innerText.trim()) field.textContent = '';
     });
     for (const id of ['cvAtualInput', 'jobDescriptionInput', 'respostaInput', 'feedbackAfterPdf', 'feedbackFooter']) {
-        document.getElementById(id).addEventListener('input', () => { dirty = true; });
+        document.getElementById(id).addEventListener('input', () => {
+            dirty = true;
+            if (id === 'cvAtualInput') mostrarMensagem(document.getElementById('cvImportStatus'), '');
+        });
     }
+    document.getElementById('feedbackDialog').addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !event.isComposing) {
+            event.preventDefault();
+            event.currentTarget.close();
+        }
+    });
     document.querySelectorAll('[data-feedback-email]').forEach(node => { node.textContent = FEEDBACK_EMAIL; });
     document.addEventListener('paste', event => {
         if (!event.target.closest('#cv-sheet [data-field]')) return;
